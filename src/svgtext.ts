@@ -25,6 +25,10 @@ export type SvgText = {
   fontSize: number;
   fontFamily: string;
   fontWeight: string;
+  /** letter-spacing as written ("normal", "2px", "0.1em"), if any. */
+  letterSpacing: string | undefined;
+  /** Laid out along a <textPath> (cannot be moved by x and y). */
+  onPath: boolean;
   anchor: "start" | "middle" | "end";
   /** Not drawn: hidden, or inside <defs> and the like. */
   hidden: boolean;
@@ -81,6 +85,8 @@ export function readTexts(svg: string): SvgText[] {
       fontSize: num(el.inh.get("font-size"), 16.0),
       fontFamily: el.inh.get("font-family") ?? "",
       fontWeight: el.inh.get("font-weight") ?? "normal",
+      letterSpacing: el.inh.get("letter-spacing"),
+      onPath: /<textPath\b/.test(svg.slice(el.tagEnd, el.textEnd)),
       anchor: anchor === "middle" || anchor === "end" ? anchor : "start",
       hidden: el.hidden || el.nonrender,
       ancestors: el.ancestors,
