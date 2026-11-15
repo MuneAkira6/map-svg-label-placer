@@ -64,7 +64,8 @@ Candidates are sorted and the first free one wins, so one unit
 in the last place of a sort key or a distance can change the result. I had to reproduce Python where JavaScript
 differs:
 
-- `round(x, 3)` rounds the exact binary value, ties to even. `toFixed` disagreed on 25 of 1,989 test values.
+- `round(x, 3)` rounds exact ties to even, `toFixed` rounds them up: 0.0625 gives 0.062 and 0.063. They
+  disagreed on 25 of 1,989 test values.
 - `a // b` for floats: `1 // 0.1` is 9, but `Math.floor(1 / 0.1)` is 10.
 - `math.hypot`: `Math.hypot` disagreed on 165 of 504 values. I ported CPython's algorithm, which uses only
   `+ - * /` and `sqrt`, so it also gives the same result in every browser.
