@@ -1,0 +1,131 @@
+{
+ "_说明": "泗阳县水系图 v2 的 map_place_labels.py／map_labels.py 配置（skill 通用脚本）。先 render_water_v2.py 出 SVG 和未避让的 labels_water_v2.json，再跑两个脚本。字号表 360 档照交通图 v2 的 360 档（同一条目同一家族），水名分两级（Sieg、de Kartenwerkstatt/Hilfe「lieber in Größe und Schriftstellung variieren」），依据见 调研分册/D4 §2。 place.line_height 1.45：zh 真实解析量到 span 行框高＝字号×1.38–1.45（zh解析_标签检查_v2.tsv 第一轮），按行框避让。",
+ "labels": "labels_water_v2.json",
+ "svg": "siyang_water_v2.svg",
+ "styles": {
+  "360": {
+   "main": [
+    14,
+    false,
+    false,
+    "#000000",
+    0.3
+   ],
+   "neighbor": [
+    11,
+    false,
+    false,
+    "#646464",
+    0.1
+   ],
+   "seat": [
+    12,
+    true,
+    false,
+    "#000000",
+    0
+   ],
+   "river1": [
+    12,
+    false,
+    true,
+    "#0978AB",
+    0.05
+   ],
+   "river2": [
+    11,
+    false,
+    true,
+    "#0978AB",
+    0
+   ],
+   "lake": [
+    13,
+    false,
+    true,
+    "#0978AB",
+    0.25
+   ],
+   "bay": [
+    11,
+    false,
+    true,
+    "#0978AB",
+    0.1
+   ]
+  }
+ },
+ "links": {
+  "京杭大运河": "京杭大运河",
+  "废黄河": "废黄河",
+  "洪泽湖": "洪泽湖",
+  "成子湖": "成子湖",
+  "总六塘河": "总六塘河",
+  "淮沭河": "淮沭河"
+ },
+ "nolink_kinds": [
+  "neighbor",
+  "main",
+  "seat"
+ ],
+ "place": {
+  "width": 360,
+  "priority": [
+   "seat",
+   "main",
+   "river1",
+   "lake",
+   "river2",
+   "bay",
+   "neighbor"
+  ],
+  "lines": {
+   "京杭大运河": "river-canal",
+   "废黄河": "river-feihuanghe",
+   "总六塘河": "river-liutang",
+   "淮沭河": "river-huaishu",
+   "成子河": "river-chengzihe"
+  },
+  "anchors": [
+   {
+    "kinds": [
+     "seat"
+    ],
+    "xy": "seat_xy",
+    "r": 7.0
+   }
+  ],
+  "line": {
+   "clearance": 3.75
+  },
+  "area": {
+   "radius": {
+    "main": 160,
+    "lake": 120,
+    "bay": 80,
+    "neighbor": 90,
+    "*": 60
+   }
+  },
+  "line_height": 1.45
+ },
+ "wikitext": {
+  "file": "泗阳县水系图.svg",
+  "alt": "泗阳县地图：京杭大运河和废黄河自西北向东南穿过县境中部，淮沭河经县境东北角伸向北方，县南部为洪泽湖",
+  "caption": "泗阳县水系",
+  "thumb_offset": 5,
+  "decimals": 1,
+  "outputs": [
+   {
+    "name": "360",
+    "width": 360,
+    "font_size": 11,
+    "float": "right",
+    "thumb": true,
+    "caption": true,
+    "out": "water_block_v2_360.wikitext",
+    "mock": "labels_mock_water_v2_360.html"
+   }
+  ]
+ }
+}

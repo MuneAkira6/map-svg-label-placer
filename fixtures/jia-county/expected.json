@@ -1,0 +1,173 @@
+{
+ "python": "3.11.11",
+ "args": [],
+ "placements": [
+  {
+   "name": "乙镇",
+   "x": 209.07106781186548,
+   "y": 173.92893218813452,
+   "angle": 0.0,
+   "hw": 20.0,
+   "hh": 11.0,
+   "how": "右上·3",
+   "why0": "线",
+   "moved": 18
+  },
+  {
+   "name": "甲县",
+   "x": 267.1957743460271,
+   "y": 274.82844493678374,
+   "angle": 0.0,
+   "hw": 36.4,
+   "hh": 15.400000000000002,
+   "how": "附近",
+   "why0": "线",
+   "moved": 36
+  },
+  {
+   "name": "丙乡",
+   "x": 409.60769515458674,
+   "y": 114.0,
+   "angle": 0.0,
+   "hw": 24.48,
+   "hh": 13.200000000000001,
+   "how": "附近",
+   "why0": "线",
+   "moved": 12
+  },
+  {
+   "name": "某某铁路",
+   "x": 470.86849706973527,
+   "y": 148.69000084283866,
+   "angle": -0.055498505245716596,
+   "hw": 40.0,
+   "hh": 11.0,
+   "how": "沿线",
+   "why0": "线",
+   "moved": 9
+  }
+ ],
+ "failed": [],
+ "warnings": [],
+ "summary_line": "放不下 0 个（显示宽度 300px，SVG 读法 default）→ /var/folders/_v/r6f_thzn5pg53cqbdplpmplh0000gn/T/tmp2w44p2ky/placed.json",
+ "labels": [
+  {
+   "name": "甲县",
+   "kind": "main",
+   "x": 267.1957743460271,
+   "y": 274.82844493678374
+  },
+  {
+   "name": "乙镇",
+   "kind": "town",
+   "x": 209.07106781186548,
+   "y": 173.92893218813452
+  },
+  {
+   "name": "丙乡",
+   "kind": "unit",
+   "x": 409.60769515458674,
+   "y": 114.0
+  },
+  {
+   "name": "某某铁路",
+   "kind": "rail",
+   "x": 470.86849706973527,
+   "y": 148.69000084283866,
+   "angle": -3.1798301198642207
+  },
+  {
+   "name": "某某河",
+   "kind": "water",
+   "x": 100.0,
+   "y": 380.0,
+   "skip300": true
+  },
+  {
+   "name": "公路",
+   "kind": "legend",
+   "x": 480.0,
+   "y": 325.0,
+   "anchor": "start"
+  },
+  {
+   "name": "铁路",
+   "kind": "legend",
+   "x": 480.0,
+   "y": 355.0,
+   "anchor": "start"
+  }
+ ],
+ "obstacles": {
+  "segs": {
+   "count": 20,
+   "sum": 19914.52,
+   "abs_sum": 19914.52
+  },
+  "rects": {
+   "count": 3,
+   "sum": 4118.0,
+   "abs_sum": 4118.0
+  },
+  "oboxes": {
+   "count": 0,
+   "sum": 0.0,
+   "abs_sum": 0.0
+  },
+  "circles": {
+   "count": 1,
+   "sum": 381.0,
+   "abs_sum": 381.0
+  },
+  "geoms": {
+   "border": {
+    "rings": 1,
+    "points": 6,
+    "closed": 1,
+    "sum": 2990.0
+   },
+   "legend": {
+    "rings": 1,
+    "points": 4,
+    "closed": 1,
+    "sum": 3340.0
+   },
+   "rail": {
+    "rings": 1,
+    "points": 4,
+    "closed": 0,
+    "sum": 1690.0
+   },
+   "road": {
+    "rings": 1,
+    "points": 9,
+    "closed": 0,
+    "sum": 4100.625
+   },
+   "sep": {
+    "rings": 1,
+    "points": 2,
+    "closed": 0,
+    "sum": 1000.0
+   },
+   "unit-a": {
+    "rings": 1,
+    "points": 4,
+    "closed": 1,
+    "sum": 1520.0
+   },
+   "unit-b": {
+    "rings": 1,
+    "points": 4,
+    "closed": 1,
+    "sum": 2470.0
+   },
+   "urban": {
+    "rings": 1,
+    "points": 4,
+    "closed": 1,
+    "sum": 1500.0
+   }
+  }
+ }
+}

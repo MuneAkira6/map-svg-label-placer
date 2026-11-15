@@ -1,0 +1,45 @@
+{
+ "_说明": "map_place_labels.py 和 map_labels.py 共用的最小配置（虚构的甲县）。相对路径相对于本文件所在目录。",
+ "_用法": [
+  "S=.claude/skills/wikipedia-editing/scripts",
+  "python3 -I -X utf8 $S/map_place_labels.py $S/examples/map_labels_example.json --out /tmp/ex/labels_placed.json",
+  "python3 -I -X utf8 $S/map_labels.py $S/examples/map_labels_example.json --labels /tmp/ex/labels_placed.json --svg $S/examples/map_example.svg --outdir /tmp/ex"
+ ],
+ "labels": "map_example_labels.json",
+ "svg": "map_example.svg",
+ "styles": {
+  "300": {
+   "main": [14, false, false, "#000000", 0.3],
+   "town": [10, false, false, "#000000", 0],
+   "unit": [12, true, false, "#000000", 0],
+   "rail": [10, false, false, "#000000", 0],
+   "water": [11, false, true, "#0978AB", 0],
+   "legend": [11, false, false, "#000000", 0]
+  }
+ },
+ "links": {"乙镇": "乙镇 (甲县)", "丙乡": "丙乡"},
+ "nolink_kinds": ["legend"],
+ "place": {
+  "width": 300,
+  "area_ids": ["urban"],
+  "priority": ["town", "main", "unit", "rail", "water"],
+  "lines": {"某某铁路": "rail"},
+  "anchors": [{"kinds": ["town"], "xy": "towns/{name}", "r": 7.0}],
+  "area": {"radius": {"main": 120, "*": 60}},
+  "within": [{"names": ["丙乡"], "id": "unit-b"}]
+ },
+ "wikitext": {
+  "file": "甲县示例.svg",
+  "alt": "甲县示例图",
+  "caption": "甲县",
+  "outputs": [
+   {"name": "条目", "width": 300, "font_size": 11, "float": "right", "thumb": true, "caption": true,
+    "out": "block_300.wikitext", "mock": "mock_300.html"},
+   {"name": "模板", "width": 300, "font_size": 11, "width_param": "1",
+    "begin": [["image", "{file}"], ["width", "{width}"], ["float", "{{{float|right}}}"],
+              ["font-size", "{font_size}px"], ["alt", "{{{alt|{alt}}}}"]],
+    "end": "<noinclude>\n[[Category:示例分类]]\n</noinclude>\n",
+    "out": "Template_甲县示例图.wikitext"}
+  ]
+ }
+}

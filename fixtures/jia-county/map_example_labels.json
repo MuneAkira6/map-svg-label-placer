@@ -1,0 +1,15 @@
+{
+ "width": 600,
+ "height": 400,
+ "_说明": "画图脚本输出的「未避让」标签：x、y 是想放的位置（SVG 像素），anchor=start 时是左端中点；towns 是驻地坐标（锚点）",
+ "towns": {"乙镇": [182.0, 192.0]},
+ "labels": [
+  {"name": "甲县", "kind": "main", "x": 300.0, "y": 260.0},
+  {"name": "乙镇", "kind": "town", "x": 192.0, "y": 192.0, "anchor": "start"},
+  {"name": "丙乡", "kind": "unit", "x": 420.0, "y": 120.0},
+  {"name": "某某铁路", "kind": "rail", "x": 470.0, "y": 140.0, "angle": -3.0},
+  {"name": "某某河", "kind": "water", "x": 100.0, "y": 380.0, "skip300": true},
+  {"name": "公路", "kind": "legend", "x": 480.0, "y": 325.0, "anchor": "start"},
+  {"name": "铁路", "kind": "legend", "x": 480.0, "y": 355.0, "anchor": "start"}
+ ]
+}

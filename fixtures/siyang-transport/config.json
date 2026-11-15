@@ -1,0 +1,295 @@
+{
+ "_说明": "泗阳县交通图 v2 的 map_place_labels.py／map_labels.py 配置（照搬 place_labels_v2.py、make_labels_v2.py 写死的参数）。放进 草稿/地图/交通图v2/ 后：先 render_transport_v2.py 重出未避让的 labels_v2.json，再跑两个脚本。svg_parse=legacy 和旧脚本逐字节相同；改成 default 只有泗阳站一处变。",
+ "labels": "labels_v2.json",
+ "svg": "siyang_transport_v2.svg",
+ "styles": {
+  "600": {
+   "main": [
+    21,
+    false,
+    false,
+    "#000000",
+    0.5
+   ],
+   "neighbor": [
+    14,
+    false,
+    false,
+    "#646464",
+    0.2
+   ],
+   "seat": [
+    16,
+    true,
+    false,
+    "#000000",
+    0
+   ],
+   "place": [
+    12,
+    false,
+    false,
+    "#000000",
+    0.2
+   ],
+   "jd": [
+    13,
+    false,
+    false,
+    "#000000",
+    0
+   ],
+   "town": [
+    12,
+    false,
+    false,
+    "#000000",
+    0
+   ],
+   "station": [
+    12,
+    false,
+    false,
+    "#000000",
+    0
+   ],
+   "rail": [
+    11,
+    false,
+    false,
+    "#000000",
+    0.1
+   ],
+   "toll": [
+    10,
+    false,
+    false,
+    "#000000",
+    0
+   ],
+   "water": [
+    12,
+    false,
+    true,
+    "#0978AB",
+    0.1
+   ],
+   "legend": [
+    12,
+    false,
+    false,
+    "#000000",
+    0
+   ],
+   "lake": [
+    15,
+    false,
+    true,
+    "#0978AB",
+    0.4
+   ]
+  },
+  "360": {
+   "main": [
+    14,
+    false,
+    false,
+    "#000000",
+    0.3
+   ],
+   "neighbor": [
+    11,
+    false,
+    false,
+    "#646464",
+    0.1
+   ],
+   "seat": [
+    12,
+    true,
+    false,
+    "#000000",
+    0
+   ],
+   "place": [
+    11,
+    false,
+    false,
+    "#000000",
+    0.1
+   ],
+   "jd": [
+    11,
+    false,
+    false,
+    "#000000",
+    0
+   ],
+   "town": [
+    10,
+    false,
+    false,
+    "#000000",
+    0
+   ],
+   "station": [
+    11,
+    false,
+    false,
+    "#000000",
+    0
+   ],
+   "rail": [
+    10,
+    false,
+    false,
+    "#000000",
+    0
+   ],
+   "toll": [
+    10,
+    false,
+    false,
+    "#000000",
+    0
+   ],
+   "water": [
+    11,
+    false,
+    true,
+    "#0978AB",
+    0
+   ],
+   "legend": [
+    11,
+    false,
+    false,
+    "#000000",
+    0
+   ],
+   "lake": [
+    12,
+    false,
+    true,
+    "#0978AB",
+    0.2
+   ]
+  }
+ },
+ "links": {
+  "徐宿淮盐铁路": "徐盐客运专线",
+  "宿淮铁路": "宿淮铁路",
+  "新长铁路": "新长铁路",
+  "泗阳站": "泗阳站"
+ },
+ "nolink_kinds": [
+  "legend"
+ ],
+ "place": {
+  "width": 360,
+  "area_ids": [
+   "urban"
+  ],
+  "fixed_kinds": [
+   "legend"
+  ],
+  "fixed_as_obstacles": false,
+  "priority": [
+   "seat",
+   "station",
+   "toll",
+   "main",
+   "jd",
+   "town",
+   "rail",
+   "water",
+   "lake",
+   "neighbor"
+  ],
+  "lines": {
+   "新长铁路": "rail-0",
+   "宿淮铁路": "rail-1",
+   "徐宿淮盐铁路": "rail-2",
+   "京杭运河": "canal"
+  },
+  "anchors": [
+   {
+    "kinds": [
+     "town",
+     "jd"
+    ],
+    "xy": "towns/{name}",
+    "r": 7.0
+   },
+   {
+    "kinds": [
+     "seat"
+    ],
+    "xy": "seat_xy",
+    "r": 7.0
+   },
+   {
+    "kinds": [
+     "station"
+    ],
+    "xy": "station_xy",
+    "r": 14.0
+   },
+   {
+    "kinds": [
+     "toll"
+    ],
+    "names": [
+     "泗阳",
+     "泗阳东"
+    ],
+    "xy": "toll_xy/{index}",
+    "r": 3.3
+   }
+  ],
+  "area": {
+   "radius": {
+    "main": 140,
+    "lake": 90,
+    "neighbor": 70,
+    "*": 60
+   }
+  }
+ },
+ "wikitext": {
+  "file": "泗阳县交通.svg",
+  "alt": "泗阳县地图：两条并行的铁路自西向东经过县城北侧，另一条铁路经过县境东北角；高速公路在县城南侧自西北向东南穿过，国道、省道连接县城",
+  "caption": "泗阳县交通",
+  "thumb_offset": 5,
+  "decimals": 1,
+  "outputs": [
+   {
+    "name": "600",
+    "width": 600,
+    "font_size": 12,
+    "float": "center",
+    "before": "{| class=\"wikitable\" style=\"margin:0 auto;\"\n! 泗阳县交通图\n|-\n|\n",
+    "after": "|}\n",
+    "out": "transport_block_v2_600.wikitext",
+    "mock": "labels_mock_v2_600.html"
+   },
+   {
+    "name": "360",
+    "width": 360,
+    "font_size": 11,
+    "float": "right",
+    "thumb": true,
+    "caption": true,
+    "out": "transport_block_v2_360.wikitext",
+    "mock": "labels_mock_v2_360.html"
+   }
+  ],
+  "mock_all": {
+   "out": "labels_mock_v2.html",
+   "order": [
+    "360",
+    "600"
+   ]
+  }
+ }
+}

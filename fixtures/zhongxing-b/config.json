@@ -1,0 +1,125 @@
+{
+ "_说明": "众兴街道一带图 v2 方案 B 的 map_place_labels.py／map_labels.py 配置（skill scripts/）。字号表照 v1（泗阳县交通图 v2 的 360 档）。邻区名（城厢街道、来安街道、三庄镇、临河镇）和旧县城带 within：字框整个落在自己的面（u<relation id>）里。先 render_zx_v2.py 重出未避让的标签，再跑两个脚本。",
+ "_用法": [
+  "S=.claude/skills/wikipedia-editing/scripts; O=维基百科/众兴街道/草稿/地图/v2",
+  "python3 -I -X utf8 $S/map_place_labels.py $O/zx_labels_config_v2B.json --out $O/labels_zx_v2B_placed.json --report $O/out/place_report_v2B.txt",
+  "python3 -I -X utf8 $S/map_labels.py $O/zx_labels_config_v2B.json --labels $O/labels_zx_v2B_placed.json --svg $O/zx_area_v2B.svg --outdir $O/out"
+ ],
+ "labels": "labels_zx_v2B.json",
+ "svg": "zx_area_v2B.svg",
+ "styles": {
+  "360": {
+   "gov": [
+    11,
+    false,
+    false,
+    "#000000",
+    0
+   ],
+   "place": [
+    11,
+    false,
+    false,
+    "#000000",
+    0.2
+   ],
+   "neighbor": [
+    11,
+    false,
+    false,
+    "#646464",
+    0.1
+   ],
+   "water": [
+    11,
+    false,
+    true,
+    "#0978AB",
+    0.1
+   ],
+   "poi": [
+    10,
+    false,
+    false,
+    "#000000",
+    0
+   ],
+   "subject": [
+    13,
+    true,
+    false,
+    "#000000",
+    0.15
+   ]
+  }
+ },
+ "links": {},
+ "nolink_kinds": [],
+ "place": {
+  "width": 360,
+  "area_ids": [
+   "urban",
+   "outside"
+  ],
+  "priority": [
+   "gov",
+   "subject",
+   "poi",
+   "water",
+   "place",
+   "neighbor"
+  ],
+  "lines": {
+   "中运河": "canal"
+  },
+  "anchors": [
+   {
+    "kinds": [
+     "gov"
+    ],
+    "xy": "gov_xy",
+    "r": 7.0
+   },
+   {
+    "kinds": [
+     "poi"
+    ],
+    "xy": "pois/{name}",
+    "r": 3.5
+   }
+  ],
+  "line": {
+   "clearance": 3.1
+  },
+  "area": {
+   "radius": {
+    "place": 70,
+    "neighbor": 200,
+    "*": 60,
+    "subject": 90
+   }
+  },
+  "within_margin": 4.0
+ },
+ "wikitext": {
+  "file": "泗阳县众兴街道一带.svg",
+  "alt": "众兴一带地图",
+  "caption": "众兴一带",
+  "thumb_offset": 5,
+  "decimals": 1,
+  "outputs": [
+   {
+    "name": "360",
+    "width": 360,
+    "font_size": 11,
+    "float": "right",
+    "thumb": true,
+    "caption": true,
+    "out": "block_360_v2B.wikitext",
+    "mock": "mock_360_v2B.html"
+   }
+  ]
+ },
+ "_links_note": "图上的名字不加内链：中运河在导言、天妃宫和城厢街道、来安街道在历史沿革节正文都已链过（editing-basics.md §9.1：以全文为准，只在首次出现时链；同一节里的重复去链）。要加回就在 links 里写，例 {\"城厢街道\": \"城厢街道 (泗阳县)\"}。",
+ "_caption_note": "题注、alt 沿用本人线上版的写法（rev 95574027：caption=众兴一带，黄色为建成区｜alt=众兴一带地图），只去掉「黄色为建成区」：建成区改成灰色，众兴街道用红线围出、名字写在里面，不靠题注认颜色。"
+}

@@ -1,0 +1,92 @@
+{
+ "_说明": "A made-up map for the SVG reader: transforms, every path command, rotated rects and text, hidden elements, <defs>, <use>, <image>.",
+ "labels": "labels.json",
+ "svg": "map.svg",
+ "styles": {
+  "400": {
+   "town": [
+    10,
+    true,
+    false,
+    "#000000",
+    0
+   ],
+   "river": [
+    9,
+    false,
+    true,
+    "#0978AB",
+    0.1
+   ],
+   "area": [
+    11,
+    false,
+    false,
+    "#646464",
+    0.2
+   ],
+   "vtext": [
+    9,
+    false,
+    false,
+    "#000000",
+    0
+   ],
+   "legend": [
+    9,
+    false,
+    false,
+    "#000000",
+    0
+   ]
+  }
+ },
+ "text": {
+  "bold_factor": 1.05
+ },
+ "place": {
+  "width": 400,
+  "area_ids": [
+   "park"
+  ],
+  "priority": [
+   "town",
+   "river",
+   "area"
+  ],
+  "lines": {
+   "丙河": "river"
+  },
+  "anchors": [
+   {
+    "kinds": [
+     "town"
+    ],
+    "xy": "points/{name}",
+    "r": 6.0
+   }
+  ],
+  "area": {
+   "radius": {
+    "vtext": 30,
+    "*": 48
+   }
+  },
+  "within": [
+   {
+    "kinds": [
+     "area"
+    ],
+    "id": "{zone}"
+   }
+  ],
+  "within_margin": 2.0,
+  "line": {
+   "offsets": [
+    0,
+    5
+   ]
+  },
+  "rect_max": 200.0
+ }
+}

@@ -1,0 +1,101 @@
+{
+ "width": 900,
+ "height": 1445,
+ "seat_xy": [
+  437.7,
+  649.2
+ ],
+ "labels": [
+  {
+   "name": "泗阳县",
+   "x": 470,
+   "y": 330,
+   "kind": "main"
+  },
+  {
+   "name": "京杭大运河",
+   "x": 538.4,
+   "y": 740.8,
+   "kind": "river1",
+   "line": "river-canal",
+   "angle": 56.6,
+   "fixed": true
+  },
+  {
+   "name": "废黄河",
+   "x": 560,
+   "y": 1000,
+   "kind": "river1",
+   "line": "river-feihuanghe"
+  },
+  {
+   "name": "总六塘河",
+   "x": 380,
+   "y": 522,
+   "kind": "river2",
+   "line": "river-liutang"
+  },
+  {
+   "name": "淮沭河",
+   "x": 590,
+   "y": 150,
+   "kind": "river2",
+   "line": "river-huaishu"
+  },
+  {
+   "name": "成子河",
+   "x": 300,
+   "y": 760,
+   "kind": "river2",
+   "line": "river-chengzihe"
+  },
+  {
+   "name": "洪泽湖",
+   "x": 200,
+   "y": 1250,
+   "kind": "lake"
+  },
+  {
+   "name": "成子湖",
+   "x": 250,
+   "y": 980,
+   "kind": "bay"
+  },
+  {
+   "name": "沭阳县",
+   "x": 450,
+   "y": 25,
+   "kind": "neighbor"
+  },
+  {
+   "name": "宿豫区",
+   "x": 80,
+   "y": 120,
+   "kind": "neighbor"
+  },
+  {
+   "name": "宿城区",
+   "x": 60,
+   "y": 700,
+   "kind": "neighbor"
+  },
+  {
+   "name": "淮阴区",
+   "x": 820,
+   "y": 1050,
+   "kind": "neighbor"
+  },
+  {
+   "name": "泗洪县",
+   "x": 80,
+   "y": 1350,
+   "kind": "neighbor"
+  },
+  {
+   "name": "众兴街道",
+   "x": 467.7,
+   "y": 649.2,
+   "kind": "seat"
+  }
+ ]
+}

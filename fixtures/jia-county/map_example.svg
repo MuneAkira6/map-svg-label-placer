@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">
+<!-- map_place_labels.py / map_labels.py 的最小示例：虚构的「甲县」，两个乡镇面、县界、一条公路、一条铁路、
+     一个驻地圈、一个编号牌和图例框。不是真实地理。 -->
+<rect x="0" y="0" width="600" height="400" fill="#F5F5F5"/>
+<path id="unit-a" d="M60,60 L300,50 L310,340 L70,330 Z" fill="#FEFEE9" stroke="none"/>
+<path id="unit-b" d="M300,50 L540,70 L530,330 L310,340 Z" fill="#FEFEE9" stroke="none"/>
+<path id="sep" d="M300,50 L310,340" fill="none" stroke="#9A9A9A" stroke-width="1.2"/>
+<path id="border" d="M60,60 L300,50 L540,70 L530,330 L310,340 L70,330 Z" fill="none" stroke="#646464" stroke-width="2.14"/>
+<path id="urban" d="M150,170 L210,165 L215,215 L155,220 Z" fill="#F1C872" stroke="#000000" stroke-width="0.2"/>
+<path id="road" d="M20,200 C150,180 250,230 580,190" fill="none" stroke="#FF4800" stroke-width="2.5"/>
+<path id="rail" d="M20,120 L200,110 L400,135 L580,125" fill="none" stroke="#000000" stroke-width="5"/>
+<circle cx="182" cy="192" r="6.3" fill="#FFFFFF" stroke="#000000" stroke-width="1.4"/>
+<rect x="380" y="190" width="60" height="26" rx="3" fill="#E71F20"/>
+<text x="410" y="210" font-family="DejaVu Sans Condensed,DejaVu Sans,sans-serif" font-size="20" font-weight="bold" fill="#FFFFFF" text-anchor="middle">G1</text>
+<rect id="legend" x="420" y="300" width="150" height="80" fill="#FFFFFF" stroke="#000000" stroke-width="1.2"/>
+<path d="M430,325 L470,325" fill="none" stroke="#FF4800" stroke-width="2.5"/>
+<path d="M430,355 L470,355" fill="none" stroke="#000000" stroke-width="5"/>
+</svg>

@@ -1,0 +1,16 @@
+{
+ "width": 400,
+ "height": 300,
+ "points": {"甲": [120.0, 80.0], "乙": [250.0, 200.0]},
+ "labels": [
+  {"name": "甲", "kind": "town", "x": 120.0, "y": 80.0},
+  {"name": "乙", "kind": "town", "x": 260.0, "y": 200.0, "anchor": "start"},
+  {"name": "丙河", "kind": "river", "x": 150.0, "y": 125.0},
+  {"name": "丁区", "kind": "area", "x": 300.0, "y": 215.0, "zone": "zone"},
+  {"name": "戊园", "kind": "area", "x": 92.0, "y": 197.0, "within": "park"},
+  {"name": "己山", "kind": "vtext", "x": 180.0, "y": 200.0, "vertical": true},
+  {"name": "庚", "kind": "area", "x": 30.0, "y": 280.0, "skip400": true},
+  {"name": "图例", "kind": "legend", "x": 330.0, "y": 70.0, "anchor": "end"},
+  {"name": "𠀀村", "kind": "area", "x": 350.0, "y": 180.0, "angle": 10}
+ ]
+}
