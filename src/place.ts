@@ -211,6 +211,11 @@ function lookup(meta: unknown, path: string, lb: Label, names: string[] | undefi
   return cur;
 }
 
+/** obj[key] for an own key only, so names like "constructor" do not reach Object.prototype. */
+function own<T>(obj: Record<string, T>, key: string): T | undefined {
+  return Object.hasOwn(obj, key) ? obj[key] : undefined;
+}
+
 function ruleMatches(rule: { kinds?: string[]; names?: string[] }, lb: Label): boolean {
   if (rule.kinds !== undefined && !rule.kinds.includes(lb.kind)) return false;
   if (rule.names !== undefined && !rule.names.includes(lb.name)) return false;
@@ -276,7 +281,7 @@ export function placeLabels(svg: string, doc: LabelDoc, cfg: Config, opts: Place
   const labels = meta.labels;
 
   const lineOf = (lb: Label): Pt[][] | null => {
-    const pid = (truthy(lb.line) ? lb.line : undefined) ?? P.lines[lb.name];
+    const pid = (truthy(lb.line) ? lb.line : undefined) ?? own(P.lines, lb.name);
     if (!truthy(pid)) return null;
     const g = obst.geoms.get(String(pid));
     if (g === undefined) throw new Error(`no element with id="${pid}" in the SVG (label "${lb.name}")`);
@@ -392,7 +397,7 @@ export function placeLabels(svg: string, doc: LabelDoc, cfg: Config, opts: Place
       }
     } else {
       const rad = PA.radius;
-      const lim = rad[lb.kind] ?? rad["*"] ?? 60;
+      const lim = own(rad, lb.kind) ?? own(rad, "*") ?? 60;
       for (let rr = 0; rr <= lim; rr += PA.ring_step) {
         const n = Math.max(1, Math.trunc((2 * Math.PI * rr) / PA.arc_step));
         for (let t = 0; t < n; t++) {
