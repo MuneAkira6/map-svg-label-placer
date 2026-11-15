@@ -48,7 +48,10 @@ const NON_RENDER = new Set([
   "defs", "clipPath", "mask", "symbol", "pattern", "marker", "linearGradient", "radialGradient",
   "filter", "title", "desc", "metadata", "style", "script",
 ]);
-const INHERIT = ["stroke", "stroke-width", "fill", "font-size", "text-anchor", "visibility"] as const;
+const INHERIT = [
+  "stroke", "stroke-width", "fill", "font-size", "text-anchor", "visibility",
+  "font-family", "font-weight", "font-style", "letter-spacing",
+] as const;
 
 /** Python str.strip() whitespace. */
 const PY_WS = "\\t\\n\\v\\f\\r\\x1c-\\x1f \\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000";
