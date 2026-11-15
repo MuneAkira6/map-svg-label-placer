@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // map-svg-label-placer place <config.json> [--labels FILE] [--svg FILE] [--out FILE] [--width PX] [--report FILE]
 // map-svg-label-placer wikitext <config.json> [--labels FILE] [--svg FILE] [--outdir DIR] [--only NAME]...
+// map-svg-label-placer svg <map.svg> [--config FILE] [--out FILE] [--report FILE]
 //
 // The same config file and options as reference/python/map_place_labels.py and map_labels.py. Relative paths
 // in the config are relative to the config file. `place` overwrites the label file unless --out (or place.out
@@ -12,11 +13,13 @@ import { parseArgs } from "node:util";
 import type { Config, LabelDoc } from "./config.js";
 import { placeLabels, type How, type Placement } from "./place.js";
 import { formatF, pyRound } from "./py.js";
+import { placeSvgTexts } from "./svgplace.js";
 import { wikitextFiles } from "./wikitext.js";
 
 const USAGE = `usage:
   map-svg-label-placer place <config.json> [--labels FILE] [--svg FILE] [--out FILE] [--width PX] [--report FILE]
-  map-svg-label-placer wikitext <config.json> [--labels FILE] [--svg FILE] [--outdir DIR] [--only NAME]...`;
+  map-svg-label-placer wikitext <config.json> [--labels FILE] [--svg FILE] [--outdir DIR] [--only NAME]...
+  map-svg-label-placer svg <map.svg> [--config FILE] [--out FILE] [--report FILE]`;
 const DIRS: Record<number, string> = {
   0: "right", 315: "upper right", 45: "lower right", 180: "left", 225: "upper left", 135: "lower left", 270: "above", 90: "below",
 };
@@ -122,11 +125,33 @@ function wikitext(args: string[]): void {
   }
 }
 
+function svgCommand(args: string[]): void {
+  const { values: a, positionals } = parseArgs({
+    args,
+    allowPositionals: true,
+    options: { config: { type: "string" }, out: { type: "string" }, report: { type: "string" } },
+  });
+  if (positionals.length !== 1) throw new UsageError("svg takes one SVG file");
+  const inPath = positionals[0]!;
+  const cfg: Config = a.config ? JSON.parse(readFileSync(a.config, "utf8")) : {};
+  const res = placeSvgTexts(readFileSync(inPath, "utf8"), cfg);
+  for (const w of res.warnings) console.error(`warning: ${w}`);
+  const outPath = a.out ?? inPath.replace(/(\.svg)?$/i, ".placed.svg");
+  write(outPath, res.svg);
+  const report = res.placements.flatMap(reportLines);
+  for (const g of res.groups) if (g.reason) report.push(`fixed: ${g.label.name} (${g.reason})`);
+  report.push(`${res.failed.length} could not be placed -> ${outPath}`);
+  const text = report.join("\n");
+  console.log(text);
+  if (a.report) write(a.report, `${text}\n`);
+}
+
 function main(argv: string[]): number {
   const [cmd, ...rest] = argv;
   try {
     if (cmd === "place") place(rest);
     else if (cmd === "wikitext") wikitext(rest);
+    else if (cmd === "svg") svgCommand(rest);
     else if (cmd === "-h" || cmd === "--help") {
       console.log(USAGE);
       return 0;
