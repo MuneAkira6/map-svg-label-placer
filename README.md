@@ -19,8 +19,12 @@ I did not find one that reads an arbitrary SVG map and treats the names of point
 
 ```sh
 npm run build
-node dist/cli.js fixtures/jia-county/config.json --out placed.json
+node dist/cli.js place fixtures/jia-county/config.json --out placed.json
+node dist/cli.js wikitext fixtures/jia-county/config.json --labels placed.json --outdir out
 ```
+
+`place` writes the label file with the new positions. `wikitext` turns it into `{{Image label}}` blocks for
+Chinese Wikipedia, plus an HTML page that lays the labels over the map the way the template does, for checking.
 
 ```ts
 import { placeLabels } from "map-svg-label-placer";
@@ -28,8 +32,9 @@ import { placeLabels } from "map-svg-label-placer";
 const { doc, failed } = placeLabels(svgText, labelFile, config);
 ```
 
-The config and label files use the format of the Python script, which is documented (in Chinese) at the top of
-[`reference/python/map_place_labels.py`](reference/python/map_place_labels.py).
+The config and label files use the format of the Python scripts, which is documented (in Chinese) at the top of
+[`reference/python/map_place_labels.py`](reference/python/map_place_labels.py) and
+[`map_labels.py`](reference/python/map_labels.py).
 [`fixtures/jia-county/config.json`](fixtures/jia-county/config.json) is a small example.
 
 ## How it works
@@ -53,7 +58,7 @@ On a given JavaScript engine, the same input always gives the same output.
 ## Matching the Python version
 
 The tests run both versions on seven maps (two made up, five drawn for Wikipedia) and compare every chosen
-position. All choices agree; 229 of the 237 numbers (x, y, angle) are bit-identical and the rest differ by less than 1e-12.
+position and every output file. All choices agree and the wikitext is byte-identical; 229 of the 237 numbers (x, y, angle) are bit-identical and the rest differ by less than 1e-12.
 
 Candidates are sorted and the first free one wins, so one unit
 in the last place of a sort key or a distance can change the result. I had to reproduce Python where JavaScript
