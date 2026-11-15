@@ -43,6 +43,8 @@ export type PlaceConfig = {
   text_char_em: number;
   text_descent: number;
   svg_parse: string;
+  /** Where the CLI writes the placed label file (relative to the config file). */
+  out: string | null;
 };
 
 export type Config = {
@@ -88,7 +90,7 @@ export function placeOptions(cfg: Config): PlaceConfig {
   const P = {
     width: 360, margin: 3.0, step: 2.5, cell: 24.0, gap_label: 8.0, own_ratio: 0.6, frame_pad: 4.0, line_height: 1.1,
     rect_max: 400.0, area_ids: [], fixed_kinds: ["legend"], fixed_as_obstacles: true, priority: [], lines: {}, anchors: [],
-    within: [], within_margin: null as number | null, text_char_em: 0.6, text_descent: 2.0, svg_parse: "default",
+    within: [], within_margin: null as number | null, text_char_em: 0.6, text_descent: 2.0, svg_parse: "default", out: null,
     ...p,
     point: { ...DEFAULT_POINT, ...p.point },
     line: { ...DEFAULT_LINE, ...p.line },
