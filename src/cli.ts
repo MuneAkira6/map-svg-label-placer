@@ -1,17 +1,27 @@
 #!/usr/bin/env node
-// map-svg-label-placer <config.json> [--labels <file>] [--svg <file>] [--out <file>] [--width <px>] [--report <file>]
-// Same config file and options as reference/python/map_place_labels.py. Relative paths in the config are
-// relative to the config file. Without --out (or place.out in the config) the label file is overwritten.
+// map-svg-label-placer place <config.json> [--labels FILE] [--svg FILE] [--out FILE] [--width PX] [--report FILE]
+// map-svg-label-placer wikitext <config.json> [--labels FILE] [--svg FILE] [--outdir DIR] [--only NAME]...
+//
+// The same config file and options as reference/python/map_place_labels.py and map_labels.py. Relative paths
+// in the config are relative to the config file. `place` overwrites the label file unless --out (or place.out
+// in the config) is given.
 
-import { readFileSync, writeFileSync } from "node:fs";
-import { dirname, isAbsolute, join, resolve } from "node:path";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { parseArgs } from "node:util";
 import type { Config, LabelDoc } from "./config.js";
 import { placeLabels, type How, type Placement } from "./place.js";
-import { pyRound } from "./py.js";
+import { formatF, pyRound } from "./py.js";
+import { wikitextFiles } from "./wikitext.js";
 
-const USAGE = "usage: map-svg-label-placer <config.json> [--labels FILE] [--svg FILE] [--out FILE] [--width PX] [--report FILE]";
-const DIRS: Record<number, string> = { 0: "right", 315: "upper right", 45: "lower right", 180: "left", 225: "upper left", 135: "lower left", 270: "above", 90: "below" };
+const USAGE = `usage:
+  map-svg-label-placer place <config.json> [--labels FILE] [--svg FILE] [--out FILE] [--width PX] [--report FILE]
+  map-svg-label-placer wikitext <config.json> [--labels FILE] [--svg FILE] [--outdir DIR] [--only NAME]...`;
+const DIRS: Record<number, string> = {
+  0: "right", 315: "upper right", 45: "lower right", 180: "left", 225: "upper left", 135: "lower left", 270: "above", 90: "below",
+};
+
+class UsageError extends Error {}
 
 function howText(h: How): string {
   switch (h.kind) {
@@ -36,59 +46,97 @@ function reportLines(p: Placement): string[] {
   return lines;
 }
 
-function main(argv: string[]): number {
-  let parsed;
-  try {
-    parsed = parseArgs({
-      args: argv,
-      allowPositionals: true,
-      options: {
-        labels: { type: "string" },
-        svg: { type: "string" },
-        out: { type: "string" },
-        width: { type: "string" },
-        report: { type: "string" },
-        help: { type: "boolean", short: "h" },
-      },
-    });
-  } catch (e) {
-    console.error(`${(e as Error).message}\n${USAGE}`);
-    return 2;
-  }
-  const { values: a, positionals } = parsed;
-  if (a.help || positionals.length !== 1) {
-    console.error(USAGE);
-    return a.help ? 0 : 2;
-  }
-  const configPath = resolve(positionals[0]!);
+function load(configArg: string) {
+  const configPath = resolve(configArg);
   const cfg: Config = JSON.parse(readFileSync(configPath, "utf8"));
   const rel = (p: string) => (isAbsolute(p) ? p : join(dirname(configPath), p));
+  return { cfg, rel };
+}
+
+function write(path: string, text: string): void {
+  mkdirSync(dirname(resolve(path)), { recursive: true });
+  writeFileSync(path, text, "utf8");
+}
+
+function place(args: string[]): void {
+  const { values: a, positionals } = parseArgs({
+    args,
+    allowPositionals: true,
+    options: {
+      labels: { type: "string" },
+      svg: { type: "string" },
+      out: { type: "string" },
+      width: { type: "string" },
+      report: { type: "string" },
+    },
+  });
+  if (positionals.length !== 1) throw new UsageError("place takes one config file");
+  const { cfg, rel } = load(positionals[0]!);
   const labelsPath = a.labels ?? rel(String(cfg.labels));
-  const svgPath = a.svg ?? rel(String(cfg.svg));
   const placeOut = cfg.place?.out;
   const outPath = a.out ?? (placeOut ? rel(placeOut) : labelsPath);
-  const width = a.width === undefined ? undefined : Number.parseInt(a.width, 10);
-  if (width !== undefined && !Number.isFinite(width)) {
-    console.error(`--width must be an integer\n${USAGE}`);
-    return 2;
+  let width: number | undefined;
+  if (a.width !== undefined) {
+    width = Number.parseInt(a.width, 10);
+    if (!Number.isFinite(width)) throw new UsageError("--width must be an integer");
   }
   const doc: LabelDoc = JSON.parse(readFileSync(labelsPath, "utf8"));
-  const svg = readFileSync(svgPath, "utf8");
+  const svg = readFileSync(a.svg ?? rel(String(cfg.svg)), "utf8");
 
   const res = placeLabels(svg, doc, cfg, { width });
   for (const w of res.warnings) console.error(`warning: ${w}`);
-  writeFileSync(outPath, `${JSON.stringify(res.doc, null, 1)}\n`, "utf8");
+  write(outPath, `${JSON.stringify(res.doc, null, 1)}\n`);
   const report = res.placements.flatMap(reportLines);
   report.push(`${res.failed.length} could not be placed (display width ${res.width}px) -> ${outPath}`);
   const text = report.join("\n");
   console.log(text);
-  if (a.report) writeFileSync(a.report, `${text}\n`, "utf8");
-  return 0;
+  if (a.report) write(a.report, `${text}\n`);
 }
 
-try {
-  process.exitCode = main(process.argv.slice(2));
-} catch (e) {
-  console.error(`error: ${(e as Error).message}`);
-  process.exitCode = 1;
+function wikitext(args: string[]): void {
+  const { values: a, positionals } = parseArgs({
+    args,
+    allowPositionals: true,
+    options: {
+      labels: { type: "string" },
+      svg: { type: "string" },
+      outdir: { type: "string" },
+      only: { type: "string", multiple: true },
+    },
+  });
+  if (positionals.length !== 1) throw new UsageError("wikitext takes one config file");
+  const { cfg, rel } = load(positionals[0]!);
+  const labelsPath = a.labels ?? rel(String(cfg.labels));
+  const doc: LabelDoc = JSON.parse(readFileSync(labelsPath, "utf8"));
+  const outdir = a.outdir ?? dirname(resolve(labelsPath));
+  const svgPath = a.svg ?? rel(String(cfg.svg ?? ""));
+  const svgSrc = relative(resolve(outdir), resolve(svgPath)).split(sep).join("/");
+  const { files, outputs } = wikitextFiles(doc, cfg, svgSrc, a.only);
+  for (const [name, text] of files) write(join(outdir, name), text);
+  const outNames = new Map((cfg.wikitext as { outputs: { name?: string; width: number; out?: string }[] }).outputs.map((o) => [o.name ?? String(o.width), o.out]));
+  for (const r of outputs) {
+    console.log(`${r.name}: ${r.count} labels -> ${outNames.get(r.name) ?? "(no file)"}; outside the image: ${r.outside.length}`);
+    for (const o of r.outside) {
+      console.log(`  outside: ${o.name} (from ${formatF(o.left, 0)},${formatF(o.top, 0)}, ${formatF(o.w, 0)} x ${formatF(o.h, 0)}; image ${r.width} x ${r.height})`);
+    }
+  }
 }
+
+function main(argv: string[]): number {
+  const [cmd, ...rest] = argv;
+  try {
+    if (cmd === "place") place(rest);
+    else if (cmd === "wikitext") wikitext(rest);
+    else if (cmd === "-h" || cmd === "--help") {
+      console.log(USAGE);
+      return 0;
+    } else throw new UsageError(cmd ? `unknown command "${cmd}"` : "missing command");
+    return 0;
+  } catch (e) {
+    const usage = e instanceof UsageError || (e as { code?: string }).code?.startsWith("ERR_PARSE_ARGS");
+    console.error(`error: ${(e as Error).message}${usage ? `\n${USAGE}` : ""}`);
+    return usage ? 2 : 1;
+  }
+}
+
+process.exitCode = main(process.argv.slice(2));

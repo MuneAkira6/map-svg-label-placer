@@ -88,5 +88,79 @@
    ]
   },
   "rect_max": 200.0
+ },
+ "links": {
+  "甲": "甲 (示例)",
+  "丁区": "丁区",
+  "己山": "己山"
+ },
+ "nolink_kinds": [
+  "legend"
+ ],
+ "wikitext": {
+  "file": "Features example.svg",
+  "alt": "example",
+  "caption": "Example <map> & \"labels\"",
+  "decimals": 0,
+  "outputs": [
+   {
+    "name": "thumb",
+    "width": 400,
+    "font_size": 10,
+    "float": "left",
+    "thumb": true,
+    "caption": true,
+    "out": "thumb.wikitext",
+    "mock": "thumb.html"
+   },
+   {
+    "name": "tpl",
+    "width": 400,
+    "font_size": 9,
+    "width_param": "width",
+    "caption": "Inline caption",
+    "before": "{| class=\"wikitable\"\n|-\n|",
+    "end": "\n|}\n",
+    "after": "<!-- end -->",
+    "out": "tpl.wikitext"
+   },
+   {
+    "name": "custom",
+    "width": 400,
+    "font_size": 11,
+    "begin": [
+     [
+      "image",
+      "{file}"
+     ],
+     [
+      "width",
+      "{width}"
+     ],
+     [
+      "font-size",
+      "{font_size}px"
+     ],
+     [
+      "caption",
+      "{caption}"
+     ],
+     [
+      "alt",
+      "{{{alt|{alt}}}}"
+     ]
+    ],
+    "caption": true,
+    "out": "sub/custom.wikitext"
+   }
+  ],
+  "mock_all": {
+   "out": "all.html",
+   "order": [
+    "tpl",
+    "thumb",
+    "missing"
+   ]
+  }
  }
 }
