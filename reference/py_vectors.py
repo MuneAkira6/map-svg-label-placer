@@ -35,4 +35,7 @@ for _ in range(300):
     q = (rng.uniform(0, 600), rng.uniform(0, 400))
     dists.append([p, q, math.dist(p, q)])
 angles = [[d, math.radians(d), math.degrees(math.radians(d))] for d in list(range(-360, 361, 5)) + [rng.uniform(-180, 180) for _ in range(100)]]
-json.dump({"round": rounds, "floordiv": divs, "hypot": hyp, "dist": dists, "angles": angles}, sys.stdout)
+fmt_xs = xs + [1234567.0, 123456.5, 0.0001234, 0.00001234, -0.0, 1e21, 999999.5, 9999995.0, 0.5, 2.675, 1e-300, 123.456789]
+fmt_xs += [round(rng.uniform(-50, 2000), 1) for _ in range(200)] + [rng.uniform(-1, 1) * 10 ** rng.randint(-8, 8) for _ in range(200)]
+fmts = [[x, format(x, "g"), format(x, ".2f"), format(x, ".0f"), repr(x)] for x in fmt_xs]
+json.dump({"format": fmts, "round": rounds, "floordiv": divs, "hypot": hyp, "dist": dists, "angles": angles}, sys.stdout)

@@ -213,3 +213,79 @@ export function pyStr(v: unknown): string {
   if (v === null || v === undefined) return "None";
   return String(v);
 }
+
+/** |x| = n / 10**k exactly (every finite double is a finite decimal). */
+function exactDecimal(x: number): { neg: boolean; n: bigint; k: number } {
+  view.setFloat64(0, x);
+  const hiWord = view.getUint32(0);
+  const neg = hiWord >>> 31 === 1;
+  const biased = (hiWord >>> 20) & 0x7ff;
+  let mant = (BigInt(hiWord & 0xfffff) << 32n) | BigInt(view.getUint32(4));
+  let e: number;
+  if (biased === 0) e = -1074;
+  else {
+    mant |= 1n << 52n;
+    e = biased - 1075;
+  }
+  if (e >= 0) return { neg, n: mant << BigInt(e), k: 0 };
+  return { neg, n: mant * 5n ** BigInt(-e), k: -e };
+}
+
+/** n / 10**drop rounded half to even. */
+function divRoundEven(n: bigint, drop: number): bigint {
+  if (drop <= 0) return n * 10n ** BigInt(-drop);
+  const d = 10n ** BigInt(drop);
+  const q = n / d;
+  const r2 = (n - q * d) * 2n;
+  return r2 > d || (r2 === d && (q & 1n) === 1n) ? q + 1n : q;
+}
+
+/** Python format(x, ".{digits}f") */
+export function formatF(x: number, digits: number): string {
+  if (!Number.isFinite(x)) return Number.isNaN(x) ? "nan" : x > 0 ? "inf" : "-inf";
+  const { neg, n, k } = exactDecimal(x);
+  const s = divRoundEven(n, k - digits).toString().padStart(digits + 1, "0");
+  const body = digits > 0 ? `${s.slice(0, -digits)}.${s.slice(-digits)}` : s;
+  return (neg ? "-" : "") + body;
+}
+
+/** Python format(x, "g"): 6 significant digits, trailing zeros removed. */
+export function formatG(x: number, precision = 6): string {
+  if (!Number.isFinite(x)) return Number.isNaN(x) ? "nan" : x > 0 ? "inf" : "-inf";
+  const { neg, n, k } = exactDecimal(x);
+  const sign = neg ? "-" : "";
+  if (n === 0n) return `${sign}0`;
+  const len = n.toString().length;
+  let exp = len - 1 - k;
+  let m = divRoundEven(n, len - precision);
+  if (m.toString().length > precision) {
+    m /= 10n;
+    exp += 1;
+  }
+  const d = m.toString();
+  const strip = (s: string) => (s.includes(".") ? s.replace(/0+$/, "").replace(/\.$/, "") : s);
+  if (exp >= -4 && exp < precision) {
+    const fixed = exp >= 0 ? `${d.slice(0, exp + 1)}.${d.slice(exp + 1)}` : `0.${"0".repeat(-exp - 1)}${d}`;
+    return sign + strip(fixed);
+  }
+  const mant = strip(`${d[0]}.${d.slice(1)}`);
+  return `${sign}${mant}e${exp < 0 ? "-" : "+"}${String(Math.abs(exp)).padStart(2, "0")}`;
+}
+
+/** str(x) of a Python float: shortest round-trip digits, always with a decimal point or exponent. */
+export function floatRepr(x: number): string {
+  if (!Number.isFinite(x)) return Number.isNaN(x) ? "nan" : x > 0 ? "inf" : "-inf";
+  const a = Math.abs(x);
+  if (a !== 0 && (a < 1e-4 || a >= 1e16)) {
+    const [m, e] = x.toExponential().split("e") as [string, string];
+    const ee = Number(e);
+    return `${m}e${ee < 0 ? "-" : "+"}${String(Math.abs(ee)).padStart(2, "0")}`;
+  }
+  const s = Object.is(x, -0) ? "-0" : String(x);
+  return /[.e]/.test(s) ? s : `${s}.0`;
+}
+
+/** Python html.escape(s, quote=True) */
+export function htmlEscape(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#x27;");
+}

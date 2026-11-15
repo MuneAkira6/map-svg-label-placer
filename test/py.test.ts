@@ -55,3 +55,12 @@ describe("Python semantics that differ from JavaScript", () => {
     expect([[0], { a: 1 }, "x", 1].map(truthy)).toEqual([true, true, true, true]);
   });
 });
+
+describe("Python string formatting", () => {
+  const fmt: [number, string, string, string, string][] = (v as unknown as { format: [number, string, string, string, string][] }).format;
+  it('format(x, "g"), ".2f", ".0f" and repr', async () => {
+    const { formatG, formatF, floatRepr } = await import("../src/py.js");
+    const bad = fmt.filter(([x, g, f2, f0, r]) => formatG(x) !== g || formatF(x, 2) !== f2 || formatF(x, 0) !== f0 || floatRepr(x) !== r);
+    expect(bad).toEqual([]);
+  });
+});
