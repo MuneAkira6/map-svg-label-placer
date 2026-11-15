@@ -35,6 +35,8 @@ export type SvgReadOptions = {
   textCharEm: number;
   /** How far below the baseline the SVG's own text reaches, in px. */
   textDescent: number;
+  /** Texts that are not obstacles (the ones being moved), by the source offset of their start tag. */
+  skipTextAt?: ReadonlySet<number>;
 };
 
 const TAG_RE = new RegExp(
@@ -301,7 +303,7 @@ export function parseSvg(svg: string, opts: SvgReadOptions): Obstacles {
     }
     if (local === "text") {
       const content = el.content;
-      if (!active || !content) continue;
+      if (!active || !content || opts.skipTextAt?.has(el.start)) continue;
       const fs = num(inh.get("font-size"), 16.0);
       const tx = num(a.get("x"), 0.0);
       const ty = num(a.get("y"), 0.0);

@@ -53,6 +53,10 @@ export type PlaceOptions = {
   width?: number;
   /** Decimals of x, y and angle written to `doc` (default 1, as the Python script; null keeps full precision). */
   decimals?: number | null;
+  /** Half width and height of a label's box in SVG px, instead of the config's style table. */
+  sizeOf?: (label: Label, index: number) => [number, number];
+  /** SVG texts that are not obstacles (the ones being moved), by the source offset of their start tag. */
+  skipTextAt?: ReadonlySet<number>;
 };
 
 type Box = { cx: number; cy: number; hw: number; hh: number; ang: number };
@@ -276,7 +280,11 @@ export function placeLabels(svg: string, doc: LabelDoc, cfg: Config, opts: Place
   const meta = cloneDoc(doc);
   const W = meta.width;
   const H = meta.height;
-  const obst = parseSvg(svg, { areaIds: P.area_ids, rectMax: P.rect_max, textCharEm: P.text_char_em, textDescent: P.text_descent });
+  const obst = parseSvg(svg, {
+    areaIds: P.area_ids, rectMax: P.rect_max, textCharEm: P.text_char_em, textDescent: P.text_descent, skipTextAt: opts.skipTextAt,
+  });
+  const sizeOf = (lb: Label): [number, number] =>
+    opts.sizeOf ? opts.sizeOf(lb, labels.indexOf(lb)) : halfSize(lb, width, W, cfg, P);
   const world = new World(obst, W, H, P);
   const labels = meta.labels;
 
@@ -332,7 +340,7 @@ export function placeLabels(svg: string, doc: LabelDoc, cfg: Config, opts: Place
   if (P.fixed_as_obstacles) {
     for (const lb of labels) {
       if (isFixed(lb) && !skipped(lb)) {
-        const [hw, hh] = halfSize(lb, width, W, cfg, P);
+        const [hw, hh] = sizeOf(lb);
         const [cx, cy] = center(lb, hw);
         world.placed.push({ cx, cy, hw, hh, ang: radians(lb.angle ?? 0) });
       }
@@ -355,7 +363,7 @@ export function placeLabels(svg: string, doc: LabelDoc, cfg: Config, opts: Place
   for (const i of order) {
     const lb = labels[i]!;
     if (skipped(lb)) continue;
-    const [hw, hh] = halfSize(lb, width, W, cfg, P);
+    const [hw, hh] = sizeOf(lb);
     const [x0, y0] = center(lb, hw);
     const poly = withinOf(lb);
     const ang0 = radians(lb.angle ?? 0);
