@@ -119,21 +119,49 @@ export function elementAttrs(attrText: string): Map<string, string> {
   return a;
 }
 
-type Ctx = { tag: string | null; m: Mat; inh: Map<string, string>; hidden: boolean; nonrender: boolean };
+type Ctx = {
+  tag: string | null;
+  m: Mat;
+  inh: Map<string, string>;
+  hidden: boolean;
+  nonrender: boolean;
+  ids: string[];
+  switchAt: number | null;
+};
 
-export function parseSvg(svg: string, opts: SvgReadOptions): Obstacles {
-  const segs: Seg[] = [];
-  const rects: Rect[] = [];
-  const oboxes: OBox[] = [];
-  const circles: Circle[] = [];
-  const geoms = new Map<string, Ring[]>();
-  const warnings: string[] = [];
-  const warn = (msg: string) => {
-    if (!warnings.includes(msg)) warnings.push(msg);
-  };
-  const areaIds = new Set(opts.areaIds);
+/** One start tag, with what it inherits from its ancestors. */
+export type SvgElement = {
+  /** Tag name without namespace prefix. */
+  local: string;
+  /** Own attributes, style="…" declarations applied, entities decoded. */
+  attrs: Map<string, string>;
+  /** From the element's own coordinates to the root's, including its own transform. */
+  m: Mat;
+  /** The same without the element's own transform. */
+  parentM: Mat;
+  /** Inherited presentation attributes (stroke, fill, font-size, text-anchor, …). */
+  inh: Map<string, string>;
+  hidden: boolean;
+  /** Inside <defs>, <clipPath>, <mask>, <symbol>, … */
+  nonrender: boolean;
+  /** Offsets of the start tag in the source string. */
+  start: number;
+  tagEnd: number;
+  /** Ids of the ancestors, outermost first. */
+  ancestors: string[];
+  /** Offset of the nearest enclosing <switch>, if any. */
+  switchAt: number | null;
+  /** For <text>: offset of its "</text>" (tagEnd if none), and its content trimmed and unescaped. */
+  textEnd: number;
+  content: string;
+};
 
-  const stack: Ctx[] = [{ tag: null, m: IDENT, inh: new Map(), hidden: false, nonrender: false }];
+/**
+ * Every start tag in document order. Elements inside a <text> are not visited (the text is read as a whole).
+ * Closing tags pop the context only when they match the innermost open element, as in the Python version.
+ */
+export function* walkSvg(svg: string): Generator<SvgElement> {
+  const stack: Ctx[] = [{ tag: null, m: IDENT, inh: new Map(), hidden: false, nonrender: false, ids: [], switchAt: null }];
   let pos = 0;
   for (const mt of svg.matchAll(TAG_RE)) {
     const tag = mt[2];
@@ -157,8 +185,42 @@ export function parseSvg(svg: string, opts: SvgReadOptions): Obstacles {
     const vis = inh.get("visibility");
     const hidden = parent.hidden || a.get("display") === "none" || vis === "hidden" || vis === "collapse";
     const nonrender = parent.nonrender || NON_RENDER.has(local);
-    const ctx: Ctx = { tag: local, m, inh, hidden, nonrender };
-    if (!selfclose && local !== "text") stack.push(ctx);
+    const id = a.get("id");
+    const ids = id === undefined ? parent.ids : [...parent.ids, id];
+    const switchAt = local === "switch" ? mt.index : parent.switchAt;
+    if (!selfclose && local !== "text") stack.push({ tag: local, m, inh, hidden, nonrender, ids, switchAt });
+    const tagEnd = mt.index + mt[0].length;
+    let textEnd = tagEnd;
+    let content = "";
+    if (local === "text") {
+      if (!selfclose) {
+        textEnd = svg.indexOf("</text>", tagEnd);
+        if (textEnd < 0) textEnd = tagEnd;
+        content = pyStrip(unescapeEntities(svg.slice(tagEnd, textEnd).replace(/<[^>]*>/g, "")));
+      }
+      pos = textEnd;
+    }
+    yield {
+      local, attrs: a, m, parentM: parent.m, inh, hidden, nonrender, start: mt.index, tagEnd,
+      ancestors: parent.ids, switchAt: parent.switchAt, textEnd, content,
+    };
+  }
+}
+
+export function parseSvg(svg: string, opts: SvgReadOptions): Obstacles {
+  const segs: Seg[] = [];
+  const rects: Rect[] = [];
+  const oboxes: OBox[] = [];
+  const circles: Circle[] = [];
+  const geoms = new Map<string, Ring[]>();
+  const warnings: string[] = [];
+  const warn = (msg: string) => {
+    if (!warnings.includes(msg)) warnings.push(msg);
+  };
+  const areaIds = new Set(opts.areaIds);
+
+  for (const el of walkSvg(svg)) {
+    const { local, attrs: a, m, inh, hidden, nonrender } = el;
     const active = !hidden && !nonrender;
     const stroke = inh.get("stroke") ?? "none";
     const stroked = !["none", "transparent", ""].includes(stroke);
@@ -235,11 +297,7 @@ export function parseSvg(svg: string, opts: SvgReadOptions): Obstacles {
       continue;
     }
     if (local === "text") {
-      const start = mt.index + mt[0].length;
-      let end = selfclose ? start : svg.indexOf("</text>", start);
-      if (end < 0) end = start;
-      const content = selfclose ? "" : pyStrip(unescapeEntities(svg.slice(start, end).replace(/<[^>]*>/g, "")));
-      pos = end;
+      const content = el.content;
       if (!active || !content) continue;
       const fs = num(inh.get("font-size"), 16.0);
       const tx = num(a.get("x"), 0.0);
