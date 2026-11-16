@@ -58,9 +58,11 @@ export type SvgText = {
   hidden: boolean;
   /** Ids of the ancestors, outermost first (e.g. a "legend" group). */
   ancestors: string[];
-  /** Offset of the enclosing <switch>; texts sharing it are language versions of one label. */
+  /** Offset of the enclosing <switch>, if any. */
   switchAt: number | null;
-  /** systemLanguage of the text, if any. */
+  /** The child of that <switch> holding the text: the text itself, or a group of texts in one language. */
+  altAt: number | null;
+  /** systemLanguage of the text, or of the <switch> child holding it. */
   lang: string | undefined;
   /** Every x / y value that moves with the text: its own and its <tspan>s'. */
   coords: CoordSpan[];
@@ -249,7 +251,8 @@ export function readTexts(svg: string): SvgText[] {
       hidden: el.hidden || el.nonrender,
       ancestors: el.ancestors,
       switchAt: el.switchAt,
-      lang: el.attrs.get("systemLanguage"),
+      altAt: el.alt?.at ?? null,
+      lang: el.attrs.get("systemLanguage") ?? el.alt?.lang,
       coords,
     });
   }

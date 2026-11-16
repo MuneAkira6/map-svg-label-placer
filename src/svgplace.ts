@@ -8,6 +8,7 @@ import { placeLabels, type Placement } from "./place.js";
 import { degrees, truthy } from "./py.js";
 import { num, walkSvg } from "./svg.js";
 import { moveTexts, readTexts, type SvgText } from "./svgtext.js";
+import { groupTexts } from "./textgroups.js";
 import { layoutText, type Box } from "./textlayout.js";
 
 export type SvgTextConfig = {
@@ -23,10 +24,12 @@ export type SvgTextConfig = {
   point_r?: number;
   /** Decimals of the rewritten x and y (default 2). */
   decimals?: number;
+  /** Language the map is drawn in, which picks the version shown in a <switch> (default "en", as Commons). */
+  lang?: string;
 };
 
 export type TextGroup = {
-  /** The texts that move together: one, or the language versions inside one <switch>. */
+  /** The texts that move together: one, its language versions in a <switch>, the lines of one name. */
   texts: SvgText[];
   fixed: boolean;
   /** Why a text cannot move, when fixed for a reason other than the config. */
@@ -84,31 +87,13 @@ export function placeSvgTexts(svg: string, cfg: Config & { svg_text?: SvgTextCon
     return box !== null;
   });
 
-  // One group per text, or per <switch> of language versions.
-  const bySwitch = new Map<number, SvgText[]>();
-  const groupsOf: SvgText[][] = [];
-  for (const t of texts) {
-    if (t.switchAt === null) groupsOf.push([t]);
-    else {
-      let g = bySwitch.get(t.switchAt);
-      if (!g) {
-        g = [];
-        bySwitch.set(t.switchAt, g);
-        groupsOf.push(g);
-      }
-      g.push(t);
-    }
-  }
+  const grouped = groupTexts(texts, boxOf, tc.lang);
+  warnings.push(...grouped.warnings);
 
   const seen = new Map<string, number>();
-  const groups: TextGroup[] = groupsOf.map((ts) => {
-    const rep = ts.find((t) => t.lang === undefined) ?? ts[0]!;
-    let [l, t, r, b] = boxOf.get(rep)!;
-    for (const o of ts) {
-      if (o === rep) continue;
-      const [l2, t2, r2, b2] = boxOf.get(o)!;
-      [l, t, r, b] = [Math.min(l, l2), Math.min(t, t2), Math.max(r, r2), Math.max(b, b2)];
-    }
+  const groups: TextGroup[] = grouped.units.map(({ texts: ts, box, reason }) => {
+    const rep = ts[0]!;
+    const [l, t, r, b] = box;
     const sc = matScale(rep.m);
     const [cx, cy] = apply(rep.m, (l + r) / 2, (t + b) / 2);
     const angle = degrees(matAngle(rep.m));
@@ -117,9 +102,6 @@ export function placeSvgTexts(svg: string, cfg: Config & { svg_text?: SvgTextCon
       for (const o of ts) for (const k of key(o)) if (table && Object.hasOwn(table, k)) return table[k];
       return undefined;
     };
-    let reason: string | undefined;
-    if (ts.some((o) => o.onPath)) reason = "laid out along a textPath";
-    else if (ts.some((o) => o.vertical)) reason = "vertical text";
     const fixed = reason !== undefined || ts.some((o) => inAny(o, tc.fixed)) || (tc.move !== undefined && !ts.some((o) => inAny(o, tc.move)));
     const n = seen.get(rep.content) ?? 0;
     seen.set(rep.content, n + 1);

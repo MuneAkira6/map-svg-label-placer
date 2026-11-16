@@ -157,7 +157,11 @@ type Ctx = {
   nonrender: boolean;
   ids: string[];
   switchAt: number | null;
+  alt: SwitchAlt | null;
 };
+
+/** The direct child of a <switch> that an element is, or is inside: only one such child is drawn. */
+export type SwitchAlt = { at: number; lang: string | undefined };
 
 /** One start tag, with what it inherits from its ancestors. */
 export type SvgElement = {
@@ -183,6 +187,8 @@ export type SvgElement = {
   ancestors: string[];
   /** Offset of the nearest enclosing <switch>, if any. */
   switchAt: number | null;
+  /** The child of that <switch> the element is or is inside, with its systemLanguage. */
+  alt: SwitchAlt | null;
   /** For <text>: offset of its "</text>" (tagEnd if none), and its content trimmed and unescaped. */
   textEnd: number;
   content: string;
@@ -195,7 +201,7 @@ export type SvgElement = {
 export function* walkSvg(svg: string): Generator<SvgElement> {
   const sheet = readStyleSheet(svg, unescapeEntities);
   const stack: Ctx[] = [
-    { tag: null, m: IDENT, inh: new Map(), fontSize: 16.0, hidden: false, nonrender: false, ids: [], switchAt: null },
+    { tag: null, m: IDENT, inh: new Map(), fontSize: 16.0, hidden: false, nonrender: false, ids: [], switchAt: null, alt: null },
   ];
   let pos = 0;
   for (const mt of svg.matchAll(TAG_RE)) {
@@ -220,7 +226,8 @@ export function* walkSvg(svg: string): Generator<SvgElement> {
     const id = a.get("id");
     const ids = id === undefined ? parent.ids : [...parent.ids, id];
     const switchAt = local === "switch" ? mt.index : parent.switchAt;
-    if (!selfclose && local !== "text") stack.push({ tag: local, m, inh, fontSize, hidden, nonrender, ids, switchAt });
+    const alt = parent.tag === "switch" ? { at: mt.index, lang: a.get("systemLanguage") } : local === "switch" ? null : parent.alt;
+    if (!selfclose && local !== "text") stack.push({ tag: local, m, inh, fontSize, hidden, nonrender, ids, switchAt, alt });
     const tagEnd = mt.index + mt[0].length;
     let textEnd = tagEnd;
     let content = "";
@@ -234,7 +241,7 @@ export function* walkSvg(svg: string): Generator<SvgElement> {
     }
     yield {
       local, attrs: a, m, parentM: parent.m, inh, fontSize, hidden, nonrender, start: mt.index, tagEnd,
-      ancestors: parent.ids, switchAt: parent.switchAt, textEnd, content,
+      ancestors: parent.ids, switchAt: parent.switchAt, alt, textEnd, content,
     };
   }
 }
