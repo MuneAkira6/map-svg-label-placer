@@ -29,7 +29,7 @@ describe("<style> rules", () => {
 
   it("styles lines drawn with a class", () => {
     const o = parseSvg(svg, opts);
-    expect(o.segs).toEqual([{ x1: 0, y1: 50, x2: 100, y2: 50, hw: 1 }]);
+    expect(o.segs).toMatchObject([{ x1: 0, y1: 50, x2: 100, y2: 50, hw: 1 }]);
   });
   it("applies rules by specificity, then style, then !important", () => {
     expect(el.get("a")!.fontSize).toBe(30);

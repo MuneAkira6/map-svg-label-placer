@@ -1,9 +1,10 @@
 // A read-only check of the names on an SVG map, as Commons draws them: which have a line through them, which
 // cover each other, which run off the edge, and which text Commons does not show at all.
 
-import { apply, cellKey, matAngle, matScale, pushCell, segHitsBox, type Pt } from "./geometry.js";
+import { apply, cellKey, matAngle, matScale, numbersIn, pushCell, segHitsBox, type Pt } from "./geometry.js";
+import { pathSubpaths } from "./path.js";
 import { floorDivInt } from "./py.js";
-import { paints, parseSvg, walkSvg, type Seg } from "./svg.js";
+import { alpha, num as svgNum, paints, parseSvg, walkSvg, type Seg, type SvgElement } from "./svg.js";
 import { readSvgLabels } from "./svgplace.js";
 import type { SvgText } from "./svgtext.js";
 import { langMatches } from "./textgroups.js";
@@ -144,8 +145,11 @@ class Lines {
     });
   }
 
-  /** Does a line, with its stroke width, meet the box shrunk to the given share of its half width and height? */
-  hits(b: OBox, ku = 1, kv = 1): boolean {
+  /**
+   * Does a line, with its stroke width, meet the box shrunk to the given share of its half width and height?
+   * `shows` can rule out a line that meets the box but cannot be seen there.
+   */
+  hits(b: OBox, ku = 1, kv = 1, shows?: (g: Seg, b: OBox, bu: number, bv: number) => boolean): boolean {
     const c = Math.cos(b.ang);
     const s = Math.sin(b.ang);
     const ex = Math.abs(b.hw * c) + Math.abs(b.hh * s);
@@ -161,12 +165,179 @@ class Lines {
           const local = (x: number, y: number) => [(x - b.cx) * c + (y - b.cy) * s, -(x - b.cx) * s + (y - b.cy) * c] as const;
           const [u1, v1] = local(g.x1, g.y1);
           const [u2, v2] = local(g.x2, g.y2);
-          if (segHitsBox(u1, v1, u2, v2, b.hw * ku + g.hw, b.hh * kv + g.hw)) return true;
+          const bu = b.hw * ku + g.hw;
+          const bv = b.hh * kv + g.hw;
+          if (segHitsBox(u1, v1, u2, v2, bu, bv) && (!shows || shows(g, b, bu, bv))) return true;
         }
       }
     }
     return false;
   }
+}
+
+/** A filled shape that hides what was drawn before it: a plain colour, fully opaque, with no clip, mask or filter. */
+type Fill = {
+  at: number;
+  rings: Pt[][];
+  evenodd: boolean;
+  color: string;
+  box: [number, number, number, number];
+  /** Edges x1, y1, x2, y2 and, per 64th of the height, the edges that reach into it: built on first use. */
+  edges?: Float64Array;
+  bands?: number[][];
+};
+
+const NAMED: Record<string, string> = {
+  black: "#000000", white: "#ffffff", red: "#ff0000", green: "#008000", blue: "#0000ff", yellow: "#ffff00",
+  gray: "#808080", grey: "#808080", silver: "#c0c0c0", navy: "#000080", maroon: "#800000", olive: "#808000",
+};
+
+/** One spelling per colour ("#abc", "#AABBCC", "rgb(170,187,204)"); null for gradients, patterns and other names. */
+function colorKey(v: string | undefined): string | null {
+  const s = (v ?? "black").trim().toLowerCase();
+  if (/^#[0-9a-f]{3}$/.test(s)) return `#${[...s.slice(1)].map((c) => c + c).join("")}`;
+  if (/^#[0-9a-f]{6}$/.test(s)) return s;
+  const m = /^rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)$/.exec(s);
+  if (m) return `#${m.slice(1, 4).map((n) => Math.min(255, Number(n)).toString(16).padStart(2, "0")).join("")}`;
+  return NAMED[s] ?? null;
+}
+
+/** The outline of a filled element in root coordinates, or null when it is not a shape. */
+function fillRings(el: SvgElement): Pt[][] | null {
+  const a = el.attrs;
+  const n = (k: string) => svgNum(a.get(k), 0);
+  let rings: Pt[][];
+  if (el.local === "path") rings = pathSubpaths(a.get("d") ?? "", () => {}).map((r) => r.pts);
+  else if (el.local === "polygon" || el.local === "polyline") {
+    const v = numbersIn(a.get("points") ?? "");
+    const pts: Pt[] = [];
+    for (let i = 0; i + 1 < v.length; i += 2) pts.push([v[i]!, v[i + 1]!]);
+    rings = [pts];
+  } else if (el.local === "rect") {
+    if (`${a.get("width")}${a.get("height")}`.includes("%")) return null;
+    const [x, y, w, h] = [n("x"), n("y"), n("width"), n("height")];
+    rings = [[[x, y], [x + w, y], [x + w, y + h], [x, y + h]]];
+  } else if (el.local === "circle" || el.local === "ellipse") {
+    const rx = el.local === "circle" ? n("r") : n("rx");
+    const ry = el.local === "circle" ? n("r") : n("ry");
+    const pts: Pt[] = [];
+    for (let k = 0; k < 32; k++) pts.push([n("cx") + rx * Math.cos((k * Math.PI) / 16), n("cy") + ry * Math.sin((k * Math.PI) / 16)]);
+    rings = [pts];
+  } else return null;
+  return rings.filter((r) => r.length > 2).map((r) => r.map(([x, y]) => apply(el.m, x, y)));
+}
+
+function insideFill(f: Fill, x: number, y: number): boolean {
+  const [x0, y0, x1, y1] = f.box;
+  if (x < x0 || x > x1 || y < y0 || y > y1) return false;
+  const h = (y1 - y0) / 64 || 1;
+  if (!f.edges || !f.bands) {
+    const n = f.rings.reduce((k, r) => k + r.length, 0);
+    const edges = new Float64Array(n * 4);
+    const bands: number[][] = Array.from({ length: 64 }, () => []);
+    let e = 0;
+    for (const r of f.rings) {
+      for (let i = 0, j = r.length - 1; i < r.length; j = i++) {
+        const [xa, ya] = r[j]!;
+        const [xb, yb] = r[i]!;
+        edges.set([xa, ya, xb, yb], e * 4);
+        const lo = Math.max(0, Math.min(63, Math.floor((Math.min(ya, yb) - y0) / h)));
+        const hi = Math.max(0, Math.min(63, Math.floor((Math.max(ya, yb) - y0) / h)));
+        for (let b = lo; b <= hi; b++) bands[b]!.push(e);
+        e++;
+      }
+    }
+    f.edges = edges;
+    f.bands = bands;
+  }
+  let winding = 0;
+  let odd = false;
+  for (const e of f.bands[Math.max(0, Math.min(63, Math.floor((y - y0) / h)))]!) {
+    const xa = f.edges[e * 4]!;
+    const ya = f.edges[e * 4 + 1]!;
+    const xb = f.edges[e * 4 + 2]!;
+    const yb = f.edges[e * 4 + 3]!;
+    if (yb > y !== ya > y && x < xa + ((y - ya) * (xb - xa)) / (yb - ya)) {
+      odd = !odd;
+      winding += yb > ya ? 1 : -1;
+    }
+  }
+  return f.evenodd ? odd : winding !== 0;
+}
+
+/** The part [t0, t1] of a segment (in box coordinates) inside the box of half sizes bu, bv (Liang-Barsky). */
+function clipT(u1: number, v1: number, u2: number, v2: number, bu: number, bv: number): [number, number] | null {
+  let t0 = 0;
+  let t1 = 1;
+  const du = u2 - u1;
+  const dv = v2 - v1;
+  for (const [p, q] of [[-du, u1 + bu], [du, bu - u1], [-dv, v1 + bv], [dv, bv - v1]] as const) {
+    if (p === 0) {
+      if (q < 0) return null;
+    } else {
+      const r = q / p;
+      if (p < 0) t0 = Math.max(t0, r);
+      else t1 = Math.min(t1, r);
+    }
+  }
+  return t0 <= t1 ? [t0, t1] : null;
+}
+
+/**
+ * Whether a stroked line can be seen where it crosses a box. It cannot when, at three points along the part
+ * inside the box, it is painted over by a shape drawn later, or lies on a shape of its own colour.
+ */
+class Paint {
+  // Shapes are filed in a coarse 32 x 32 grid over the frame: most are large (countries, seas, backgrounds).
+  private readonly grid: number[][] = Array.from({ length: 32 * 32 }, () => []);
+
+  constructor(
+    private readonly fills: readonly Fill[],
+    private readonly strokeOf: ReadonlyMap<number, string | null>,
+    private readonly frame: readonly [number, number, number, number],
+  ) {
+    fills.forEach((f, i) => {
+      const [gx0, gy0] = this.cellOf(f.box[0], f.box[1]);
+      const [gx1, gy1] = this.cellOf(f.box[2], f.box[3]);
+      for (let gx = gx0; gx <= gx1; gx++) for (let gy = gy0; gy <= gy1; gy++) this.grid[gy * 32 + gx]!.push(i);
+    });
+  }
+
+  private cellOf(x: number, y: number): [number, number] {
+    const [X0, Y0, W, H] = this.frame;
+    const clamp = (v: number) => Math.max(0, Math.min(31, Math.floor(v * 32)));
+    return [clamp((x - X0) / (W || 1)), clamp((y - Y0) / (H || 1))];
+  }
+
+  private hiddenAt(g: Seg, x: number, y: number): boolean {
+    // From the last shape drawn down: the first one under the point either covers the line or lies under it.
+    const [gx, gy] = this.cellOf(x, y);
+    const near = this.grid[gy * 32 + gx]!;
+    for (let k = near.length - 1; k >= 0; k--) {
+      const f = this.fills[near[k]!]!;
+      if (!insideFill(f, x, y)) continue;
+      if (f.at > g.at!) return true;
+      const own = this.strokeOf.get(g.at!) ?? null;
+      return own !== null && f.color === own;
+    }
+    return false;
+  }
+
+  shows = (g: Seg, b: OBox, bu: number, bv: number): boolean => {
+    if (g.at === undefined) return true;
+    const c = Math.cos(b.ang);
+    const s = Math.sin(b.ang);
+    const u1 = (g.x1 - b.cx) * c + (g.y1 - b.cy) * s;
+    const v1 = -(g.x1 - b.cx) * s + (g.y1 - b.cy) * c;
+    const u2 = (g.x2 - b.cx) * c + (g.y2 - b.cy) * s;
+    const v2 = -(g.x2 - b.cx) * s + (g.y2 - b.cy) * c;
+    const t = clipT(u1, v1, u2, v2, bu, bv);
+    if (!t) return true;
+    return [0.15, 0.5, 0.85].some((k) => {
+      const tt = t[0] + (t[1] - t[0]) * k;
+      return !this.hiddenAt(g, g.x1 + (g.x2 - g.x1) * tt, g.y1 + (g.y2 - g.y1) * tt);
+    });
+  };
 }
 
 const STROKE_IN_TSPAN = /<tspan\b[^>]*(?:\sstroke\s*=\s*["'](?!none)[^"']+["']|stroke\s*:\s*(?!none)[#a-z])/i;
@@ -183,7 +354,26 @@ export function checkSvgLabels(svg: string, opts: CheckOptions = {}): SvgCheck {
   const haloAt = new Set<number>();
   const plates: { at: number; q: Pt[]; area: number }[] = [];
   const flowRoots: { start: number; end: number; text: string; corners: Quad | null }[] = [];
+  const fills: Fill[] = [];
+  const strokeOf = new Map<number, string | null>();
   for (const el of walkSvg(svg)) {
+    if (!el.hidden && !el.nonrender && el.local !== "text") {
+      if (paints(el.inh, "stroke")) strokeOf.set(el.start, colorKey(el.inh.get("stroke")));
+      const color = paints(el.inh, "fill") && alpha(el.inh.get("fill-opacity")) >= 1 && el.opacity >= 1 && !el.masked ? colorKey(el.inh.get("fill")) : null;
+      const rings = color ? fillRings(el) : null;
+      if (color && rings && rings.length) {
+        const box: Fill["box"] = [Infinity, Infinity, -Infinity, -Infinity];
+        for (const r of rings) {
+          for (const [x, y] of r) {
+            if (x < box[0]) box[0] = x;
+            if (y < box[1]) box[1] = y;
+            if (x > box[2]) box[2] = x;
+            if (y > box[3]) box[3] = y;
+          }
+        }
+        fills.push({ at: el.start, rings, evenodd: (el.inh.get("fill-rule") ?? "").trim() === "evenodd", color, box });
+      }
+    }
     if (el.local === "text") {
       const stroke = paints(el.inh, "stroke") && (el.inh.get("stroke") ?? "").trim().toLowerCase() !== (el.inh.get("fill") ?? "black").trim().toLowerCase();
       if (stroke || STROKE_IN_TSPAN.test(svg.slice(el.tagEnd, el.textEnd))) haloAt.add(el.start);
@@ -222,7 +412,9 @@ export function checkSvgLabels(svg: string, opts: CheckOptions = {}): SvgCheck {
   // Cells of about two letters, but no more than 1000 across the frame (a frame-wide line would fill millions).
   const minWidth = ((opts.minLinePx ?? 0.3) * W) / (opts.displayWidth ?? 1280);
   const segs = fsList.length ? obst.segs.filter((g) => 2 * g.hw >= minWidth) : [];
-  const lines = new Lines(segs, Math.max(fsMed * 2, Math.max(W, H) / 1000, 1e-6));
+  const cell = Math.max(fsMed * 2, Math.max(W, H) / 1000, 1e-6);
+  const lines = new Lines(segs, cell);
+  const shows = new Paint(fills, strokeOf, L.frame).shows;
 
   const labels: LabelCheck[] = L.groups.map((g, index) => {
     const rep = g.drawn[0] ?? g.texts[0]!;
@@ -234,7 +426,7 @@ export function checkSvgLabels(svg: string, opts: CheckOptions = {}): SvgCheck {
       const corners = quad(b);
       let line: LineHit | null = null;
       // The core: the middle half of the box's height (about the x-height) over 90% of its width.
-      if (!g.reason && lines.hits(b)) line = lines.hits(b, 0.9, 0.5) ? "core" : "edge";
+      if (!g.reason && lines.hits(b, 1, 1, shows)) line = lines.hits(b, 0.9, 0.5, shows) ? "core" : "edge";
       if (line === "core" || (line === "edge" && res.line === null)) res.line = line;
       res.boxes.push({ corners, line });
       const out = 0.6 * b.hh;

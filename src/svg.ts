@@ -10,7 +10,8 @@ import { expandFont, fontSizePx, matchingDecls, parseDecls, readStyleSheet, type
 import { pathSubpaths } from "./path.js";
 import { pyLen } from "./py.js";
 
-export type Seg = { x1: number; y1: number; x2: number; y2: number; hw: number };
+/** A straight piece of a stroked line; `at` is the source offset of the element it belongs to (its paint order). */
+export type Seg = { x1: number; y1: number; x2: number; y2: number; hw: number; at?: number };
 /** Axis-aligned box: x0, y0, x1, y1 */
 export type Rect = [number, number, number, number];
 /** Rotated box: centre, half width, half height, angle (radians) */
@@ -64,7 +65,7 @@ const SVG_NS = /^(?:http:\/\/www\.w3\.org\/2000\/svg|&ns_svg;)$/;
 const INHERIT = [
   "stroke", "stroke-width", "fill", "font-size", "text-anchor", "visibility",
   "font-family", "font-weight", "font-style", "letter-spacing", "writing-mode", "xml:space",
-  "fill-opacity", "stroke-opacity",
+  "fill-opacity", "stroke-opacity", "fill-rule",
 ] as const;
 
 /** An opacity value ("0.5", "50%"); 1 when absent or unreadable. */
@@ -184,6 +185,8 @@ type Ctx = {
   ids: string[];
   switchAt: number | null;
   alt: SwitchAlt | null;
+  opacity: number;
+  masked: boolean;
 };
 
 /** The direct child of a <switch> that an element is, or is inside: only one such child is drawn. */
@@ -213,6 +216,10 @@ export type SvgElement = {
   tagEnd: number;
   /** Ids of the ancestors, outermost first. */
   ancestors: string[];
+  /** Group opacity: the element's own opacity times its ancestors'. */
+  opacity: number;
+  /** The element or an ancestor has a clip-path, mask or filter, so what it covers is not simply its shape. */
+  masked: boolean;
   /** Offset of the nearest enclosing <switch>, if any. */
   switchAt: number | null;
   /** The child of that <switch> the element is or is inside, with its systemLanguage. */
@@ -232,7 +239,7 @@ export function* walkSvg(svg: string): Generator<SvgElement> {
   const svgPrefixes = new Set<string>();
   for (const m of svg.matchAll(/xmlns:([\w.-]+)\s*=\s*["']([^"']*)["']/g)) if (SVG_NS.test(m[2]!)) svgPrefixes.add(m[1]!);
   const stack: Ctx[] = [
-    { tag: null, m: IDENT, inh: new Map(), fontSize: 16.0, hidden: false, nonrender: false, ids: [], switchAt: null, alt: null },
+    { tag: null, m: IDENT, inh: new Map(), fontSize: 16.0, hidden: false, nonrender: false, ids: [], switchAt: null, alt: null, opacity: 1, masked: false },
   ];
   let pos = 0;
   for (const mt of svg.matchAll(TAG_RE)) {
@@ -261,7 +268,9 @@ export function* walkSvg(svg: string): Generator<SvgElement> {
     const ids = id === undefined ? parent.ids : [...parent.ids, id];
     const switchAt = local === "switch" ? mt.index : parent.switchAt;
     const alt = parent.tag === "switch" ? { at: mt.index, lang: a.get("systemLanguage") } : local === "switch" ? null : parent.alt;
-    if (!selfclose && local !== "text") stack.push({ tag: local, m, inh, fontSize, hidden, nonrender, ids, switchAt, alt });
+    const opacity = parent.opacity * Math.min(1, alpha(a.get("opacity")));
+    const masked = parent.masked || ["clip-path", "mask", "filter"].some((k) => (a.get(k) ?? "none").trim() !== "none");
+    if (!selfclose && local !== "text") stack.push({ tag: local, m, inh, fontSize, hidden, nonrender, ids, switchAt, alt, opacity, masked });
     const tagEnd = mt.index + mt[0].length;
     let textEnd = tagEnd;
     let content = "";
@@ -275,7 +284,7 @@ export function* walkSvg(svg: string): Generator<SvgElement> {
     }
     yield {
       local, attrs: a, m, parentM: parent.m, inh, fontSize, hidden, nonrender, unknown: !known && !parent.nonrender, start: mt.index, tagEnd,
-      ancestors: parent.ids, switchAt: parent.switchAt, alt, textEnd, content,
+      ancestors: parent.ids, switchAt: parent.switchAt, alt, textEnd, content, opacity, masked,
     };
   }
 }
@@ -328,7 +337,7 @@ export function parseSvg(svg: string, opts: SvgReadOptions): Obstacles {
           for (let i = 0; i + 1 < ring.length; i++) {
             const p = ring[i]!;
             const q = ring[i + 1]!;
-            segs.push({ x1: p[0], y1: p[1], x2: q[0], y2: q[1], hw: sw / 2 });
+            segs.push({ x1: p[0], y1: p[1], x2: q[0], y2: q[1], hw: sw / 2, at: el.start });
           }
         }
       }
@@ -359,7 +368,7 @@ export function parseSvg(svg: string, opts: SvgReadOptions): Obstacles {
         for (let i = 0; i + 1 < ring.length; i++) {
           const p = ring[i]!;
           const q = ring[i + 1]!;
-          segs.push({ x1: p[0], y1: p[1], x2: q[0], y2: q[1], hw: sw / 2 });
+          segs.push({ x1: p[0], y1: p[1], x2: q[0], y2: q[1], hw: sw / 2, at: el.start });
         }
       }
       continue;
