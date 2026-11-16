@@ -31,7 +31,8 @@ node dist/cli.js wikitext fixtures/jia-county/config.json --labels placed.json -
 ```
 
 `svg` writes a copy of the map with its texts moved. The config is optional; `svg_text.fixed` lists ids of texts
-or groups that must stay (a legend, a scale bar), and `svg_text.points` ties a name to its symbol:
+or groups that must stay (a legend, a scale bar), `svg_text.points` ties a name to its symbol, and `svg_text.lang`
+picks the language version of a multilingual map that counts as drawn (default `en`, as on Commons):
 
 ```json
 { "svg_text": { "fixed": ["legend"], "points": { "label-riverton": "town-riverton" } } }
@@ -54,9 +55,13 @@ The config and label files use the format of the Python scripts, which is docume
 ## How it works
 
 1. Read the SVG: every stroked path, line, polyline and polygon becomes line segments, and small rects, circles and
-   the SVG's own text become solid obstacles. Transforms and inherited styles are applied; anything in `<defs>` or
-   hidden is skipped. The segments go into a uniform grid.
-2. Size each label: SVG texts with the fonts Commons renders them in (below); label files at one em per
+   the SVG's own text become solid obstacles. Transforms, inherited styles and `<style>` rules are applied; anything
+   in `<defs>` or hidden is skipped. Bad path data is read up to the error, as librsvg draws it. The segments go into
+   a uniform grid.
+2. Size each label. SVG texts are laid out character by character with the font settings and `x`/`y`/`dx`/`dy` of
+   every `<tspan>`, line by line, and measured with the fonts Commons renders them in (below). Texts that belong
+   together become one label: the language versions in a `<switch>`, and the lines of a name written as separate
+   `<text>` elements. A word set one `<text>` per letter stays where it is. Label files are measured at one em per
    character, with the font size from a style table for the map's display width.
 3. Place the labels one by one, most important first. Each kind has its own candidate positions:
    - names of points (towns, stations): around the symbol, nearest first. Ties are broken in the order right, upper right,
@@ -79,6 +84,22 @@ advance widths from those Debian packages. On the test line of `File:SVG_Text_Fo
 are 1.5–4 px wider than the ink Commons draws (lines of 890–1,040 px), which is the side bearing of the first and last
 letters.
 
+## Testing on real maps
+
+[`regress/commons-sample.tsv`](regress/commons-sample.tsv) lists 360 SVG maps drawn at random from Commons.
+The files are not in this repository; `node scripts/commons_regress.mjs fetch` downloads those exact versions
+and `npm run regress` checks that every map is read as before. The first run over them showed what the small
+test maps had not:
+
+| What v0.2 got wrong | Maps | Texts |
+|---|---|---|
+| Font size set on a `<tspan>`, in a `<style>` rule, or in pt or em | 97 | 6,428 |
+| Start of the text given by its first `<tspan>`, not the `<text>` | 21 | 147 |
+| Lines whose stroke comes from a `<style>` class, so missed | 19 | |
+| `viewBox` not starting at 0,0, so names were kept inside the wrong frame | 43 | |
+| Path data with an error, which stopped the whole run | 2 | |
+| A `<switch>` of language layers read as one label holding every name of the map | 5 | |
+
 ## Matching the Python version
 
 The tests run both versions on seven maps (two made up, five drawn for Wikipedia) and compare every chosen
@@ -100,8 +121,11 @@ differs:
 
 - The search is greedy: a label placed early can take the only spot a later one had.
 - Kerning is not applied, so Latin text is measured slightly wide. Label files use 1 em per character.
-- SVG texts are moved, not rotated: names along lines keep their angle. Multi-line texts are measured as one line,
-  and vertical text is not handled.
+- SVG texts are moved, not rotated: names along lines keep their angle. Vertical text is measured but not moved,
+  and `dominant-baseline` and per-glyph `rotate` are not read.
+- Only type, class and id selectors in `<style>` are applied (all that the 39 sampled maps with a `<style>` used).
+- Lines of one name are joined by position alone, so two names stacked at line spacing and aligned (two towns
+  close together, say) move together.
 - Arcs are treated as straight lines, and arc flags written without spaces (`a5 5 0 015 5`) are misread.
 - `<use>` and `<image>` are ignored.
 - `sin`, `cos` and `atan2` come from the JavaScript engine and may differ in the last bit between engines.
