@@ -13,8 +13,9 @@ It works in two ways:
 
 ![Names on lines (left) and after placement (right)](docs/before-after.png)
 
-The [checker page](https://muneakira6.github.io/map-svg-label-placer/) moves nothing: given an SVG map on Wikimedia
-Commons, it marks the names that Commons draws with a line through them.
+[The page](https://muneakira6.github.io/map-svg-label-placer/) runs it on maps from Wikimedia Commons: it marks the
+names that have a line through them as Commons draws the map, moves those it can, and lets you download the new
+file.
 
 ## Why not an existing library
 
@@ -61,24 +62,41 @@ const { labels, unshown } = checkSvgLabels(svgText);
 const crossed = labels.filter((l) => l.line === "core" && !l.masked && !l.skipped);
 ```
 
+`fixSvgLabels` moves only the names that `checkSvgLabels` finds with a line through their letters. Each goes to the
+nearest place within two letter heights where no line comes within a pixel of it. A name stays in the area it is
+in, next to its town's point if it has one, and off other names and points; only its `x` and `y` change. Single
+letters stay, as they are mostly the spaced-out letters of an area's name. `stuck` lists the names that stay and
+why.
+
+```ts
+import { fixSvgLabels } from "map-svg-label-placer";
+
+const { svg, moves, stuck } = fixSvgLabels(svgText);
+```
+
 The config and label files use the format of the Python scripts, which is documented (in Chinese) at the top of
 [`reference/python/map_place_labels.py`](reference/python/map_place_labels.py) and
 [`map_labels.py`](reference/python/map_labels.py).
 [`fixtures/jia-county/config.json`](fixtures/jia-county/config.json) is a small example.
 
-## Checking a map
+## The page
 
-[The checker page](https://muneakira6.github.io/map-svg-label-placer/) runs `checkSvgLabels` in the browser.
-Give it the name of an SVG file on Wikimedia Commons, or a link to it. It outlines the names with a problem on the
-1280 px PNG that Commons makes of the map, and lists them; click a name to zoom to it. For a map in several
-languages, set the language to check that version. A link such as
+[The page](https://muneakira6.github.io/map-svg-label-placer/) opens with an example map from Commons. It outlines
+the names with a problem and lists them; click a name to zoom to it. **Move these names** runs `fixSvgLabels`;
+Before and After switch between the two versions, and the new file can be downloaded. Any SVG map on Commons can
+be checked by its file name or a link to it, and a link such as
 [`?file=Battle of hastings1.svg`](https://muneakira6.github.io/map-svg-label-placer/?file=Battle%20of%20hastings1.svg)
-opens with the check done.
+opens with the check done. For a map in several languages, set the language to check that version.
+
+A Commons file is first shown as the 1280 px PNG that Commons makes of it. Once names are moved, Commons has no
+picture of the new file, so both versions are drawn by the browser, in the fonts Commons uses: the page swaps each
+`font-family` for the font Commons picks and puts that font into the file it shows. The fonts come from the same
+Debian packages as Commons' ([`scripts/web_fonts.py`](scripts/web_fonts.py)). Chinese, Japanese and Korean text
+is drawn in the browser's own fonts, so it may not match its box.
 
 The page asks the Commons API for the file's URL, author and licence, then downloads the SVG and Commons' PNGs; it
-sends nothing else and needs no account. The check runs in a Web Worker, so a large map does not freeze the page.
-An SVG opened from your computer stays in the browser, but then the browser draws the map, not Commons, so the
-letters may not match the boxes.
+sends nothing else and needs no account. Checking and moving run in a Web Worker, so a large map does not freeze
+the page. An SVG opened from your computer stays in the browser.
 
 `npm run web` serves the page locally; `web/` holds its code.
 
@@ -144,6 +162,24 @@ crosses the box but misses the letters, which are narrower than the box; in the 
 two fills shows. Lines thinner than 0.3 px on a 1280 px wide map are not counted, nor lines covered by a shape
 drawn later; of 20 names that the second rule cleared, 18 indeed show no line and 2 have one touching a letter.
 
+Moving: over those 253 maps, `fixSvgLabels` moved 980 of the 14,157 names (7%), by a median of 14 px at the map's
+nominal size, as on its Commons file page (90% under 32 px), and the check then finds 2,543 names with a line
+through the letters instead of 3,522 (one moved name still has one). No map has more names covering each other or
+running off the edge than before. The other 2,542 stay: 2,429 had no free place within reach, 107 are single
+letters, and 6 could not be measured.
+
+A first version also took places where a line still crossed the edge of the name's box, and went up to three letter
+heights. In a blind check of 40 of its moves, 11 of the 17 that ended on such a line still had it through or
+touching the letters, and names moved more than 20 px were mostly further from what they named, so both were
+dropped: a place must now be clear of lines, and the reach is two letter heights.
+
+With these rules, 40 more moves were drawn at random and judged the same way: each name was shown at its old and
+new place, in random order. After the move, 34 have no line touching the letters, 3 have one touching, 1 (a
+Japanese name, drawn in the browser's fonts) has one through it, and 2 could not be judged; at the old place 24 had
+a line through them. As for what each name labels, 24 read as before, 11 less clearly and 3 wrongly (two moved
+across a border, one was half of a name split over two `<text>` elements), and 2 could not be told. Of the 17 moved
+15 px or less, 16 read as before. Look over the moved names before using the file.
+
 ## Matching the Python version
 
 The tests run both versions on seven maps (two made up, five drawn for Wikipedia) and compare every chosen
@@ -163,7 +199,7 @@ differs:
 
 ## Limitations
 
-- The search is greedy: a label placed early can take the only spot a later one had.
+- The search is greedy: a label placed early can take the only spot a later one had. `fixSvgLabels` also moves names one at a time, in file order, and does not rotate or shorten them.
 - Kerning is not applied, so Latin text is measured slightly wide. Label files use 1 em per character.
 - SVG texts are moved, not rotated: names along lines keep their angle. Vertical text is measured but not moved,
   and `dominant-baseline` and per-glyph `rotate` are not read.
@@ -181,3 +217,8 @@ differs:
 ## Licence
 
 MIT. The real maps in [`fixtures/`](fixtures/README.md) are CC BY-SA 4.0 and contain OpenStreetMap data (ODbL).
+The example maps in [`web/public/examples/`](web/public/examples/) are copies of files on Wikimedia Commons and keep
+their licences, listed with their authors in [`web/src/examples.ts`](web/src/examples.ts) and on the page: two are
+CC BY-SA 3.0 and two are in the public domain. The fonts in [`web/public/fonts/`](web/public/fonts/) are under the
+SIL Open Font License (Noto, Liberation) and the Bitstream Vera licence (DejaVu); the licence texts are next to them. The Liberation
+files are unchanged, as their licence reserves the name.

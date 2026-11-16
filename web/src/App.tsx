@@ -1,16 +1,18 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type DragEvent, type FormEvent } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type DragEvent, type FormEvent } from "react";
 import type { Quad, SvgCheck, SvgViewport } from "../../src/index.js";
 import { decodeSvg, download, largerPng, lookUp, STEPS, type CommonsFile, type Picture } from "./commons.js";
+import { drawable } from "./display.js";
+import { commonsPage, EXAMPLES, type Example } from "./examples.js";
 import { at, fitFrame } from "./fit.js";
 import { runCheck } from "./run.js";
 import { fileTitle } from "./title.js";
+import type { Moved } from "./worker.js";
 
 const REPO = "https://github.com/MuneAkira6/map-svg-label-placer";
-const EXAMPLES = ["File:Battle of hastings1.svg", "File:China-Manchukuo-map.svg"];
-
-type Kind = "core" | "edge" | "overlap" | "clipped" | "masked" | "unshown" | "skipped";
+type Kind = "moved" | "core" | "edge" | "overlap" | "clipped" | "masked" | "unshown" | "skipped";
 
 const LISTS: { kind: Kind; title: string; color: string; note: string }[] = [
+  { kind: "moved", title: "Moved", color: "#1A7F37", note: "Moved off the line. Only their x and y changed." },
   { kind: "core", title: "Line through the letters", color: "#CC35A5", note: "A line crosses the middle of the letters." },
   { kind: "edge", title: "Line across the box", color: "#3A7DDC", note: "A line crosses the name's box, but not the middle of the letters." },
   { kind: "overlap", title: "Names on top of each other", color: "#D3AA00", note: "Two names overlap by more than a tenth of the smaller one." },
@@ -35,9 +37,10 @@ type Item = { key: string; kind: Kind; name: string; detail?: string; quads: Qua
 type Shape = { key: string; color: string; quads: Quad[]; name: string; dashed?: boolean; minor?: boolean };
 
 type Result = {
-  source: "commons" | "file";
+  source: "commons" | "file" | "example";
   name: string;
   file?: CommonsFile;
+  example?: Example;
   picture: Picture;
   check: SvgCheck;
   viewport: SvgViewport;
@@ -45,7 +48,7 @@ type Result = {
 };
 
 /** The lists in the panel, and the outlines on the map (one per name, in the colour of its worst problem). */
-function itemsOf(check: SvgCheck): { items: Item[]; shapes: Shape[]; clear: Shape[] } {
+function itemsOf(check: SvgCheck, moved?: ReadonlySet<number>): { items: Item[]; shapes: Shape[]; clear: Shape[] } {
   const items: Item[] = [];
   const shapes: Shape[] = [];
   const clear: Shape[] = [];
@@ -60,10 +63,11 @@ function itemsOf(check: SvgCheck): { items: Item[]; shapes: Shape[]; clear: Shap
       if (l.overlaps.length) kinds.push(["overlap", `with ${l.overlaps.map((j) => byIndex.get(j) ?? "?").join(", ")}`]);
       if (l.clipped) kinds.push(["clipped"]);
     }
+    if (moved?.has(i) && !l.skipped) kinds.unshift(["moved"]);
     const shape = `l${i}`;
     for (const [kind, detail] of kinds) items.push({ key: `${kind}-${i}`, kind, name: l.name, detail, quads, shape });
-    const worst = kinds.find(([k]) => k !== "skipped" && k !== "masked")?.[0];
-    if (worst) shapes.push({ key: shape, color: COLOR[worst], quads, name: l.name });
+    const worst = kinds.find(([k]) => k !== "skipped" && k !== "masked" && k !== "moved")?.[0] ?? kinds.find(([k]) => k === "moved")?.[0];
+    if (worst) shapes.push({ key: shape, color: COLOR[worst], quads, name: l.name, minor: worst === "moved" });
     else if (kinds.some(([k]) => k === "masked")) shapes.push({ key: shape, color: COLOR.masked, quads, name: l.name, minor: true });
     else if (!l.skipped) clear.push({ key: shape, color: "#8C8C8C", quads, name: l.name });
   });
@@ -75,6 +79,11 @@ function itemsOf(check: SvgCheck): { items: Item[]; shapes: Shape[]; clear: Shap
   });
   return { items, shapes, clear };
 }
+
+const crossed = (check: SvgCheck) => check.labels.filter((l) => !l.skipped && l.line === "core" && !l.masked).length;
+
+/** "Some map-placed.svg" for "File:Some map.svg". */
+const placedName = (name: string) => `${name.replace(/^File:/i, "").replace(/\.svg$/i, "")}-placed.svg`;
 
 const kb = (n: number) => (n >= 1e6 ? `${(n / 1e6).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1e3))} kB`);
 
@@ -90,12 +99,20 @@ export function App() {
   const [zoom, setZoom] = useState(1);
   const [sharper, setSharper] = useState<Picture | null>(null);
   const [dragging, setDragging] = useState(false);
+  const [moved, setMoved] = useState<(Moved & { before: Picture; after: Picture; download: string }) | null>(null);
+  const [view, setView] = useState<"before" | "after">("after");
+  const [moving, setMoving] = useState(false);
   const svgText = useRef<{ key: string; text: string } | null>(null);
   const runId = useRef(0);
-  const blobUrl = useRef<string | null>(null);
+  const blobs = useRef<string[]>([]);
 
   const show = useCallback((r: Result) => {
+    // Let go of the pictures and downloads of the map shown before.
+    for (const u of blobs.current) if (u !== r.picture.url) URL.revokeObjectURL(u);
+    blobs.current = r.picture.url.startsWith("blob:") ? [r.picture.url] : [];
     setResult(r);
+    setMoved(null);
+    setView("after");
     setSelected(null);
     setZoom(1);
     setSharper(null);
@@ -149,10 +166,10 @@ export function App() {
         const reply = await runCheck(text, language);
         if (id !== runId.current) return;
         if (!reply.ok) throw new Error(`Could not read the SVG: ${reply.error}`);
-        if (blobUrl.current) URL.revokeObjectURL(blobUrl.current);
-        blobUrl.current = URL.createObjectURL(new Blob([text], { type: "image/svg+xml" }));
+        const url = await drawable(text);
+        if (id !== runId.current) return URL.revokeObjectURL(url);
         const { width, height } = reply.viewport;
-        show({ source: "file", name: file.name, picture: { url: blobUrl.current, width, height }, check: reply.check, viewport: reply.viewport, ms: reply.ms });
+        show({ source: "file", name: file.name, picture: { url, width, height }, check: reply.check, viewport: reply.viewport, ms: reply.ms });
         history.replaceState(null, "", location.pathname);
       } catch (e) {
         if (id === runId.current) setError(e instanceof Error ? e.message : String(e));
@@ -163,15 +180,76 @@ export function App() {
     [show],
   );
 
-  // A link with ?file= checks that file straight away.
+  const loadExample = useCallback(
+    async (ex: Example) => {
+      const id = ++runId.current;
+      setError(null);
+      try {
+        setBusy("Loading the example…");
+        const res = await fetch(`${import.meta.env.BASE_URL}examples/${ex.file}`);
+        if (!res.ok) throw new Error(`Could not load the example (HTTP ${res.status}).`);
+        const text = await res.text();
+        if (id !== runId.current) return;
+        svgText.current = { key: `example:${ex.slug}`, text };
+        const language = ex.lang ?? "en";
+        setLang(language);
+        setBusy("Checking the names…");
+        const reply = await runCheck(text, language);
+        if (id !== runId.current) return;
+        if (!reply.ok) throw new Error(`Could not read the SVG: ${reply.error}`);
+        const url = await drawable(text);
+        if (id !== runId.current) return URL.revokeObjectURL(url);
+        const { width, height } = reply.viewport;
+        show({ source: "example", example: ex, name: ex.title, picture: { url, width, height }, check: reply.check, viewport: reply.viewport, ms: reply.ms });
+        history.replaceState(null, "", `?example=${ex.slug}`);
+      } catch (e) {
+        if (id === runId.current) setError(e instanceof Error ? e.message : String(e));
+      } finally {
+        if (id === runId.current) setBusy(null);
+      }
+    },
+    [show],
+  );
+
+  // A link with ?file= checks that file straight away; otherwise an example is shown.
   useEffect(() => {
     if (params.get("file")) void checkCommons(params.get("file")!, params.get("lang") ?? "en");
-  }, [params, checkCommons]);
+    else void loadExample(EXAMPLES.find((e) => e.slug === params.get("example")) ?? EXAMPLES[0]!);
+  }, [params, checkCommons, loadExample]);
+
+  const moveNames = async () => {
+    if (!result || !svgText.current) return;
+    const id = runId.current;
+    const text = svgText.current.text;
+    setMoving(true);
+    setError(null);
+    try {
+      const reply = await runCheck(text, lang, true);
+      if (id !== runId.current) return;
+      if (!reply.ok || !reply.moved) throw new Error(`Could not move the names: ${reply.ok ? "no result" : reply.error}`);
+      const { width, height } = result.viewport;
+      // Commons' PNG cannot show the moved names, so both versions are drawn by the browser.
+      const before = result.source === "commons" ? { url: await drawable(text), width, height } : result.picture;
+      const after = { url: await drawable(reply.moved.svg), width, height };
+      const dl = URL.createObjectURL(new Blob([reply.moved.svg], { type: "image/svg+xml" }));
+      if (id !== runId.current) return;
+      blobs.current.push(after.url, dl, ...(before === result.picture ? [] : [before.url]));
+      setMoved({ ...reply.moved, before, after, download: dl });
+      setView("after");
+      setSelected(null);
+      setSharper(null);
+    } catch (e) {
+      if (id === runId.current) setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setMoving(false);
+    }
+  };
 
   const recheckLanguage = async (language: string) => {
     if (!result || language === lang) return;
     setLang(language);
     if (result.source === "commons") await checkCommons(result.name, language);
+    else if (result.source === "example") await loadExample({ ...result.example!, lang: language });
     else if (svgText.current) {
       const reply = await runCheck(svgText.current.text, language);
       if (reply.ok) show({ ...result, check: reply.check, viewport: reply.viewport, ms: reply.ms });
@@ -190,7 +268,14 @@ export function App() {
     if (f) void checkLocal(f, lang);
   };
 
-  const { items, shapes, clear } = useMemo(() => (result ? itemsOf(result.check) : { items: [], shapes: [], clear: [] }), [result]);
+  // What is shown: the map as it was, or with the names moved.
+  const after = view === "after" && moved !== null;
+  const shownCheck = result ? (after ? moved!.check : result.check) : null;
+  const movedIdx = useMemo(() => (moved ? new Set(moved.labels) : undefined), [moved]);
+  const { items, shapes, clear } = useMemo(
+    () => (shownCheck ? itemsOf(shownCheck, after ? movedIdx : undefined) : { items: [], shapes: [], clear: [] }),
+    [shownCheck, after, movedIdx],
+  );
   const sel = items.find((it) => it.key === selected) ?? null;
 
   // Map view: the picture fitted to the viewer, times the zoom.
@@ -203,18 +288,18 @@ export function App() {
     ro.observe(el);
     return () => ro.disconnect();
   }, [result]);
-  const pic = result?.picture;
+  const pic = result ? (after ? moved!.after : moved ? moved.before : result.picture) : undefined;
   const fitScale = pic ? Math.min((room.w - 2) / pic.width, (room.h - 2) / pic.height) : 1;
   const scale = fitScale * zoom;
   const fit = useMemo(
-    () => (result ? fitFrame(result.check.frame, result.picture.width, result.picture.height, result.viewport.preserveAspectRatio) : null),
-    [result],
+    () => (result && pic ? fitFrame(result.check.frame, pic.width, pic.height, result.viewport.preserveAspectRatio) : null),
+    [result, pic],
   );
   const points = (q: Quad) => q.map((p) => at(fit!, p).join(",")).join(" ");
 
   // Zooming in past Commons' 1280 px rendering: ask for the next standard width.
   useEffect(() => {
-    if (!result || result.source !== "commons" || !pic) return;
+    if (!result || result.source !== "commons" || moved || !pic) return;
     const need = pic.width * scale * (window.devicePixelRatio || 1);
     const have = sharper?.width ?? pic.width;
     if (need <= have * 1.1) return;
@@ -230,7 +315,7 @@ export function App() {
       stale = true;
       clearTimeout(t);
     };
-  }, [result, pic, scale, sharper, lang]);
+  }, [result, moved, pic, scale, sharper, lang]);
 
   // Selecting a name zooms in until it is a readable size and scrolls it to the middle.
   const scrollTo = useRef(false);
@@ -266,19 +351,24 @@ export function App() {
   };
 
   const counts = Object.fromEntries(LISTS.map((l) => [l.kind, items.filter((it) => it.kind === l.kind).length])) as Record<Kind, number>;
-  const named = result ? result.check.labels.length : 0;
+  const named = shownCheck ? shownCheck.labels.length : 0;
+  const credit = result?.example
+    ? { author: result.example.author, license: result.example.license, licenseUrl: result.example.licenseUrl }
+    : result?.file
+      ? { author: result.file.artist, license: result.file.license, licenseUrl: result.file.licenseUrl }
+      : null;
 
   return (
     <>
       <header className="top">
-        <h1>SVG map label check</h1>
+        <h1>SVG map labels</h1>
         <nav>
           <a href={`${REPO}#checking-a-map`}>About</a>
           <a href={REPO}>Source</a>
         </nav>
       </header>
       <main className="main">
-        <section className="mapside">
+        <section className="mapside" style={pic ? ({ "--aspect": pic.height / pic.width } as CSSProperties) : undefined}>
           <div className="tools" hidden={!result}>
             <button type="button" className="small" onClick={() => setZoom(1)} disabled={zoom === 1}>
               Fit
@@ -289,7 +379,7 @@ export function App() {
             <button type="button" className="small" onClick={() => zoomBy(1.5)} disabled={zoom >= 8} aria-label="Zoom in">
               +
             </button>
-            <span className="muted" title={result?.source === "file" ? "Of the SVG's own size" : "Of the 1280 px PNG"}>
+            <span className="muted" title={result?.source === "commons" && !moved ? "Of the 1280 px PNG" : "Of the SVG's own size"}>
               {Math.round(scale * 100)}%
             </span>
             <label className="check">
@@ -308,7 +398,7 @@ export function App() {
           >
             {result && pic && fit ? (
               <div className="map" style={{ width: pic.width * scale, height: pic.height * scale }}>
-                <img src={sharper?.url ?? pic.url} alt={`The map as ${result.source === "commons" ? "Commons" : "your browser"} draws it`} draggable={false} onError={() => setSharper(null)} />
+                <img src={sharper?.url ?? pic.url} alt={result.source === "commons" && !moved ? "The map as Commons draws it" : "The map as your browser draws it, in the fonts Commons uses"} draggable={false} onError={() => setSharper(null)} />
                 <svg viewBox={`0 0 ${pic.width} ${pic.height}`} width={pic.width * scale} height={pic.height * scale}>
                   {showClear &&
                     clear.map((s) => (
@@ -350,6 +440,25 @@ export function App() {
         </section>
 
         <aside className="panel">
+          <p className="intro">
+            Finds the names on an SVG map that have a line through them, as Wikimedia Commons draws the map, and moves those it can off the line.
+          </p>
+          <nav className="examples" aria-label="Examples">
+            <span className="muted">Examples:</span>
+            {EXAMPLES.map((ex) => (
+              <a
+                key={ex.slug}
+                href={`?example=${ex.slug}`}
+                aria-current={result?.example?.slug === ex.slug ? "true" : undefined}
+                onClick={(e) => {
+                  e.preventDefault();
+                  void loadExample(ex);
+                }}
+              >
+                {ex.label}
+              </a>
+            ))}
+          </nav>
           <form onSubmit={onSubmit}>
             <label htmlFor="file">Wikimedia Commons file</label>
             <div className="row">
@@ -385,26 +494,6 @@ export function App() {
                   }}
                 />
               </label>
-              {!result && (
-                <span className="muted">
-                  Examples:{" "}
-                  {EXAMPLES.map((t, i) => (
-                    <span key={t}>
-                      {i > 0 && ", "}
-                      <a
-                        href={`?file=${encodeURIComponent(t.slice(5))}`}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setInput(t);
-                          void checkCommons(t, lang);
-                        }}
-                      >
-                        {t.slice(5)}
-                      </a>
-                    </span>
-                  ))}
-                </span>
-              )}
             </div>
           </form>
 
@@ -414,27 +503,75 @@ export function App() {
           {result && (
             <>
               <div className="about-file">
-                <h2>{result.source === "commons" ? <a href={result.file!.page}>{result.name}</a> : result.name}</h2>
-                {result.source === "commons" ? (
-                  <p className="muted">
-                    {result.file!.artist ? `Author: ${result.file!.artist}.` : "Author: see the file page."}
-                    {result.file!.license && (
-                      <>
-                        {" Licence: "}
-                        {result.file!.licenseUrl ? <a href={result.file!.licenseUrl}>{result.file!.license}</a> : result.file!.license}.
-                      </>
-                    )}{" "}
-                    The picture is Commons' own rendering.
-                  </p>
+                <h2>
+                  {result.source === "commons" ? (
+                    <a href={result.file!.page}>{result.name}</a>
+                  ) : result.source === "example" ? (
+                    <a href={commonsPage(result.name)}>{result.name}</a>
+                  ) : (
+                    result.name
+                  )}
+                </h2>
+                {result.source === "file" ? (
+                  <p className="muted">Drawn by your browser in the fonts Commons uses, except Chinese, Japanese and Korean text. The file stays on your computer.</p>
                 ) : (
                   <p className="muted">
-                    Drawn by your browser, not by Commons, so the letters may not match the boxes. The file stays on your computer.
+                    {result.source === "example" ? "Example from Wikimedia Commons, copied on 16 November 2026. " : ""}
+                    {credit?.author ? `Author: ${credit.author}.` : "Author: see the file page."}
+                    {credit?.license && (
+                      <>
+                        {" Licence: "}
+                        {credit.licenseUrl ? <a href={credit.licenseUrl}>{credit.license}</a> : credit.license}.
+                      </>
+                    )}{" "}
+                    {result.source === "commons" && !moved ? "The picture is Commons' own rendering." : "Drawn by your browser in the fonts Commons uses, except Chinese, Japanese and Korean text."}
                   </p>
                 )}
                 <p>
                   {named} {named === 1 ? "name" : "names"}, checked in {Math.max(1, Math.round(result.ms))} ms.{" "}
-                  {counts.core + counts.edge === 0 ? "No line shows through any of them." : null}
+                  {crossed(result.check) === 0 && counts.edge === 0 ? "No line shows through any of them." : null}
                 </p>
+                {moved ? (
+                  <div className="move">
+                    <div className="seg" role="group" aria-label="Show the map">
+                      <button type="button" aria-pressed={view === "before"} onClick={() => setView("before")}>
+                        Before
+                      </button>
+                      <button type="button" aria-pressed={view === "after"} onClick={() => setView("after")}>
+                        After
+                      </button>
+                    </div>
+                    <p>
+                      Names with a line through them: {crossed(result.check)} → {crossed(moved.check)}.{" "}
+                      {[
+                        `${moved.moves.length} moved`,
+                        ...(["full", "letter", "size"] as const).flatMap((why) => {
+                          const n = moved.stuck.filter((x) => x.why === why).length;
+                          if (!n) return [];
+                          if (why === "full") return [`${n} had no free place nearby`];
+                          if (why === "letter") return [`${n} single ${n === 1 ? "letter" : "letters"} left alone`];
+                          return [`${n} could not be measured`];
+                        }),
+                      ].join(", ")}
+                      , in {Math.max(1, Math.round(moved.ms))} ms.
+                    </p>
+                    <p>
+                      <a className="button primary" href={moved.download} download={placedName(result.name)}>
+                        Download the SVG
+                      </a>{" "}
+                      <span className="muted">
+                        Only the x and y of the moved names differ.{result.source !== "file" && " The file keeps the map's licence."}
+                      </span>
+                    </p>
+                  </div>
+                ) : crossed(result.check) > 0 ? (
+                  <p>
+                    <button type="button" className="primary" onClick={() => void moveNames()} disabled={moving || busy !== null}>
+                      {moving ? "Moving…" : "Move these names"}
+                    </button>{" "}
+                    <span className="muted">off the lines through them</span>
+                  </p>
+                ) : null}
               </div>
 
               {LISTS.filter((l) => counts[l.kind] > 0).map((l) => (
@@ -488,9 +625,24 @@ export function App() {
               painted over by a shape drawn later or lying on a shape of their own colour.
             </p>
             <p>
-              Of 40 names from the first list, picked at random from 360 Commons maps and judged without knowing the
+              Of 40 names in "Line through the letters", picked at random from 360 Commons maps and judged without knowing the
               result, 32 had a visible line through or touching the letters, 7 did not and 1 was unclear. In 4 of the 7
               the line crossed the box but missed the letters.
+            </p>
+            <h2>How names are moved</h2>
+            <p>
+              Only the names in "Line through the letters" move. Each goes to the nearest place within two letter heights
+              where no line comes within a pixel of it. A name stays in the area it is in, next to its town's point if it
+              has one, and keeps off other names and points. Only its x and y change. Single letters stay: they are mostly the
+              spaced-out letters of an area's name.
+            </p>
+            <p>
+              Over the same maps, 980 names moved (7% of all names), by a median of 14 px at the map's nominal size, and the names with a line
+              through them went from 3,522 to 2,543. No map got more names on top of each other or cut off.
+              In a blind check of 40 moved names picked at random, with old and new places shuffled, 34 had no line
+              touching the letters after the move, 3 had one touching and 1 had one through them; 2 could not be judged.
+              Of the same 40, 24 still read as naming the same thing, 11 less clearly and 3 wrongly. Look over the moved
+              names before you use the file.
             </p>
             <p>
               Nothing is uploaded. The page asks Commons for the file and its PNG; a file you open stays in your browser.

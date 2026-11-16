@@ -18,12 +18,12 @@ function start(): Worker {
   return w;
 }
 
-/** Check a map in the worker. */
-export function runCheck(svg: string, lang: string): Promise<CheckReply> {
+/** Check a map in the worker; with `move`, also move the names with a line through them and check again. */
+export function runCheck(svg: string, lang: string, move = false): Promise<CheckReply> {
   worker ??= start();
   const id = ++next;
   return new Promise((done) => {
     waiting.set(id, done);
-    worker!.postMessage({ id, svg, lang } satisfies CheckRequest);
+    worker!.postMessage({ id, svg, lang, move } satisfies CheckRequest);
   });
 }
