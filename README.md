@@ -119,8 +119,8 @@ test maps had not:
 Over the same maps the check finds a line through the letters of at least one name in 194 of the 253 maps that
 have text (3,764 names), not counting names with a halo or on a plate. Of 40 of those names picked at random,
 one per map, 30 do have a visible line through them, 6 do not, and 4 could not be told at that size. The six:
-a bold name measured wider than it is drawn, two lines too faint to see, a symbol's own stem, a line along the
-bottom of the box. Lines thinner than 0.3 px on a 1280 px wide map are not counted.
+a bold name measured wider than it is drawn, three lines that cannot be seen, a symbol's own stem, a line along
+the bottom of the box. Lines thinner than 0.3 px on a 1280 px wide map are not counted.
 
 ## Matching the Python version
 
