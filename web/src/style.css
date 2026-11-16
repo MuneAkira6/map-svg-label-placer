@@ -1,0 +1,84 @@
+/* Sizes and colours measured on mapshaper.org (2026-11-16); no shadows, glows or gradients. */
+:root {
+  font: 13px/1.4 "Source Sans 3", Arial, sans-serif;
+  color: #444;
+  background: #eaf2f4;
+}
+* { box-sizing: border-box; }
+body { margin: 0; }
+a { color: #196d8e; }
+h1, h2 { font-size: inherit; margin: 0; }
+h2 { font-weight: 600; }
+p { margin: 0 0 6px; }
+.muted { color: #777; }
+
+.top { height: 30px; background: #1385b7; color: #fff; display: flex; align-items: center; gap: 16px; padding: 0 12px; }
+.top h1 { font-weight: 500; }
+.top nav { margin-left: auto; display: flex; gap: 16px; }
+.top a { color: #fff; font-weight: 500; text-decoration: none; }
+.top a:hover { text-decoration: underline; }
+
+.main { display: flex; gap: 10px; padding: 10px; height: calc(100vh - 30px); }
+.mapside { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.tools { display: flex; align-items: center; gap: 6px; height: 24px; }
+.tools[hidden] { display: none; }
+.tools .check { margin-left: auto; }
+.viewer { flex: 1; min-height: 0; overflow: auto; position: relative; }
+.viewer.dragging .drop { border-color: #196d8e; color: #196d8e; }
+.map { position: relative; margin: 0 auto; background: #fff; }
+.map img, .map svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.map img { user-select: none; }
+.shape polygon, .selected { fill: transparent; stroke-width: 1.5; vector-effect: non-scaling-stroke; pointer-events: all; cursor: pointer; }
+.shape.minor polygon { stroke-width: 1; }
+.shape.faint polygon { stroke-width: 0.75; pointer-events: none; }
+.selected { stroke-width: 3.5; pointer-events: none; }
+
+.drop {
+  height: 100%; min-height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: #f4f8f9; border: 1px dashed #999; border-radius: 9px; font-size: 15px; text-align: center; padding: 20px;
+}
+.drop p { margin: 2px 0; }
+.drop .muted { font-size: 13px; }
+
+.panel {
+  width: 340px; flex: none; overflow: auto; background: #fff; border: 1px solid #d5d5d5; border-radius: 11px;
+  padding: 12px 14px 12px 16px;
+}
+.panel > * + * { margin-top: 10px; }
+form label[for="file"] { display: block; font-weight: 600; margin-bottom: 3px; }
+.row { display: flex; align-items: center; gap: 6px; }
+.small-row { margin-top: 6px; flex-wrap: wrap; }
+input:not([type]), input[type="text"] { font: inherit; color: inherit; border: 1px solid #aaa; border-radius: 4px; padding: 3px 6px; min-width: 0; }
+#file { flex: 1; }
+.lang { width: 4.5em; }
+button, .button { font: inherit; color: inherit; cursor: pointer; }
+.small, .button.small { background: #fff; border: 1px solid #aaa; border-radius: 4px; padding: 1px 8px; line-height: 20px; }
+.small:disabled { color: #aaa; border-color: #ccc; cursor: default; }
+.primary { background: #196d8e; color: #fff; border: 1px solid #196d8e; border-radius: 4px; padding: 3px 12px; font-weight: 500; }
+.primary:disabled { opacity: 0.6; cursor: default; }
+.check { display: inline-flex; align-items: center; gap: 4px; }
+.status { color: #196d8e; }
+.error { color: #b3261e; }
+
+.about-file h2 { word-break: break-word; }
+details { border-top: 1px solid #e3e3e3; padding-top: 6px; }
+summary { cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+summary::-webkit-details-marker { display: none; }
+summary::before { content: "▸"; color: #999; width: 0.8em; }
+details[open] > summary::before { content: "▾"; }
+.swatch { width: 12px; height: 9px; border: 2px solid; flex: none; }
+.note { color: #777; margin: 3px 0 4px 1.3em; }
+ul { list-style: none; margin: 4px 0 0; padding: 0 0 0 1.1em; }
+.item { display: block; width: 100%; text-align: left; background: none; border: 0; border-radius: 3px; padding: 1px 4px; }
+.item:hover { background: #f0f5f7; }
+.item.on { background: #dcebf1; }
+.item:disabled { cursor: default; color: #777; }
+.notes li { margin: 3px 0; color: #777; }
+.method { border-top: 1px solid #e3e3e3; padding-top: 8px; color: #666; }
+.method h2 { margin-bottom: 4px; color: #444; }
+
+@media (max-width: 760px) {
+  .main { flex-direction: column; height: auto; }
+  .panel { width: auto; order: -1; }
+  .mapside { flex: none; height: 75vh; }
+}
