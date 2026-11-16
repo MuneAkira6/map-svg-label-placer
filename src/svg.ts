@@ -6,6 +6,7 @@
 
 import { IDENT, apply, isIdent, matAngle, matMul, matScale, parseTransform, NUM_SRC, numbersIn } from "./geometry.js";
 import type { Mat, Pt, Ring } from "./geometry.js";
+import { expandFont, fontSizePx, matchingDecls, parseDecls, readStyleSheet, type Decl, type StyleSheet } from "./css.js";
 import { pathSubpaths } from "./path.js";
 import { pyLen } from "./py.js";
 
@@ -52,7 +53,7 @@ const NON_RENDER = new Set([
 ]);
 const INHERIT = [
   "stroke", "stroke-width", "fill", "font-size", "text-anchor", "visibility",
-  "font-family", "font-weight", "font-style", "letter-spacing",
+  "font-family", "font-weight", "font-style", "letter-spacing", "writing-mode", "xml:space",
 ] as const;
 
 /** Python str.strip() whitespace. */
@@ -111,16 +112,29 @@ export function num(s: string | undefined, dflt?: number): number | undefined {
   return m ? Number(m[1]) : dflt;
 }
 
-/** Attributes of one element, with style="…" declarations overriding them. */
-export function elementAttrs(attrText: string): Map<string, string> {
+/**
+ * Attributes of one element with the CSS that applies to it, in cascade order: presentation attributes,
+ * matching <style> rules (by specificity), style="…", then !important declarations.
+ * A d property in CSS is ignored, as librsvg ignores it.
+ */
+export function elementAttrs(attrText: string, local?: string, sheet?: StyleSheet): Map<string, string> {
   const a = new Map<string, string>();
   for (const m of attrText.matchAll(ATTR_RE)) {
     a.set(m[1]!, unescapeEntities((m[2] ?? "") || (m[3] ?? "")));
   }
-  for (const decl of (a.get("style") ?? "").split(";")) {
-    const i = decl.indexOf(":");
-    if (i >= 0) a.set(pyStrip(decl.slice(0, i)), pyStrip(decl.slice(i + 1)));
-  }
+  const css = sheet && local ? matchingDecls(sheet, local, a.get("id"), a.get("class")) : [];
+  const inline = a.has("style") ? parseDecls(a.get("style")!) : [];
+  const apply = (decls: Decl[]) => {
+    for (const { prop, value } of decls) {
+      if (prop === "d") continue;
+      if (prop === "font") for (const [k, v] of expandFont(value) ?? []) a.set(k, v);
+      else a.set(prop, value);
+    }
+  };
+  apply(css.filter((d) => !d.important));
+  apply(inline.filter((d) => !d.important));
+  apply(css.filter((d) => d.important));
+  apply(inline.filter((d) => d.important));
   return a;
 }
 
@@ -128,6 +142,7 @@ type Ctx = {
   tag: string | null;
   m: Mat;
   inh: Map<string, string>;
+  fontSize: number;
   hidden: boolean;
   nonrender: boolean;
   ids: string[];
@@ -146,6 +161,8 @@ export type SvgElement = {
   parentM: Mat;
   /** Inherited presentation attributes (stroke, fill, font-size, text-anchor, …). */
   inh: Map<string, string>;
+  /** Computed font-size, px (units and relative sizes resolved; 16 by default). */
+  fontSize: number;
   hidden: boolean;
   /** Inside <defs>, <clipPath>, <mask>, <symbol>, … */
   nonrender: boolean;
@@ -166,7 +183,10 @@ export type SvgElement = {
  * Closing tags pop the context only when they match the innermost open element, as in the Python version.
  */
 export function* walkSvg(svg: string): Generator<SvgElement> {
-  const stack: Ctx[] = [{ tag: null, m: IDENT, inh: new Map(), hidden: false, nonrender: false, ids: [], switchAt: null }];
+  const sheet = readStyleSheet(svg, unescapeEntities);
+  const stack: Ctx[] = [
+    { tag: null, m: IDENT, inh: new Map(), fontSize: 16.0, hidden: false, nonrender: false, ids: [], switchAt: null },
+  ];
   let pos = 0;
   for (const mt of svg.matchAll(TAG_RE)) {
     const tag = mt[2];
@@ -180,20 +200,21 @@ export function* walkSvg(svg: string): Generator<SvgElement> {
       continue;
     }
     const parent = stack[stack.length - 1]!;
-    const a = elementAttrs(attrText);
+    const a = elementAttrs(attrText, local, sheet);
     const m = a.has("transform") ? matMul(parent.m, parseTransform(a.get("transform"))) : parent.m;
     const inh = new Map(parent.inh);
     for (const k of INHERIT) {
       const v = a.get(k);
       if (v !== undefined) inh.set(k, v);
     }
+    const fontSize = fontSizePx(a.get("font-size"), parent.fontSize);
     const vis = inh.get("visibility");
     const hidden = parent.hidden || a.get("display") === "none" || vis === "hidden" || vis === "collapse";
     const nonrender = parent.nonrender || NON_RENDER.has(local);
     const id = a.get("id");
     const ids = id === undefined ? parent.ids : [...parent.ids, id];
     const switchAt = local === "switch" ? mt.index : parent.switchAt;
-    if (!selfclose && local !== "text") stack.push({ tag: local, m, inh, hidden, nonrender, ids, switchAt });
+    if (!selfclose && local !== "text") stack.push({ tag: local, m, inh, fontSize, hidden, nonrender, ids, switchAt });
     const tagEnd = mt.index + mt[0].length;
     let textEnd = tagEnd;
     let content = "";
@@ -206,7 +227,7 @@ export function* walkSvg(svg: string): Generator<SvgElement> {
       pos = textEnd;
     }
     yield {
-      local, attrs: a, m, parentM: parent.m, inh, hidden, nonrender, start: mt.index, tagEnd,
+      local, attrs: a, m, parentM: parent.m, inh, fontSize, hidden, nonrender, start: mt.index, tagEnd,
       ancestors: parent.ids, switchAt: parent.switchAt, textEnd, content,
     };
   }
@@ -223,6 +244,8 @@ export function parseSvg(svg: string, opts: SvgReadOptions): Obstacles {
     if (!warnings.includes(msg)) warnings.push(msg);
   };
   const areaIds = new Set(opts.areaIds);
+  const { skipped } = readStyleSheet(svg, unescapeEntities);
+  if (skipped.length) warn(`CSS rules with these selectors are not applied (only type, .class and #id are): ${skipped.slice(0, 5).join(", ")}`);
 
   for (const el of walkSvg(svg)) {
     const { local, attrs: a, m, inh, hidden, nonrender } = el;
@@ -304,7 +327,7 @@ export function parseSvg(svg: string, opts: SvgReadOptions): Obstacles {
     if (local === "text") {
       const content = el.content;
       if (!active || !content || opts.skipTextAt?.has(el.start)) continue;
-      const fs = num(inh.get("font-size"), 16.0);
+      const fs = el.fontSize;
       const tx = num(a.get("x"), 0.0);
       const ty = num(a.get("y"), 0.0);
       const w = pyLen(content) * fs * opts.textCharEm;
