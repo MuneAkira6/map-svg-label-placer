@@ -57,3 +57,18 @@ describe("placeSvgTexts", () => {
     expect(again.svg).toBe(res.svg);
   });
 });
+
+describe("placeSvgTexts with an offset viewBox", () => {
+  it("keeps names inside the frame the viewBox gives, wherever it starts", () => {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="-850 7520 400 300">
+      <path d="M-850,7670 H-450" stroke="#000" stroke-width="3"/>
+      <text x="-650" y="7675" text-anchor="middle" font-size="20">Amisos</text></svg>`;
+    const res = placeSvgTexts(svg);
+    expect(res.failed).toEqual([]);
+    expect(res.placements[0]!.why0).toBe("line");
+    const t = readTexts(res.svg)[0]!;
+    expect(t.x).toBeGreaterThan(-850);
+    expect(t.y).toBeGreaterThan(7520);
+  });
+});
+

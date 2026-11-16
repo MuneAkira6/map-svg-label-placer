@@ -55,6 +55,8 @@ export type PlaceOptions = {
   decimals?: number | null;
   /** Half width and height of a label's box in SVG px, instead of the config's style table. */
   sizeOf?: (label: Label, index: number) => [number, number];
+  /** Top left corner of the map frame, when the viewBox does not start at 0,0. */
+  origin?: readonly [number, number];
   /** SVG texts that are not obstacles (the ones being moved), by the source offset of their start tag. */
   skipTextAt?: ReadonlySet<number>;
 };
@@ -72,6 +74,8 @@ export class World {
     private readonly W: number,
     private readonly H: number,
     private readonly P: PlaceConfig,
+    /** Top left corner of the frame (the viewBox's min-x and min-y). */
+    private readonly origin: readonly [number, number] = [0, 0],
   ) {
     const n = obst.segs.length;
     this.segs = new Float64Array(n * 5);
@@ -95,7 +99,9 @@ export class World {
     const { P } = this;
     const M = P.margin;
     const pad = P.frame_pad;
-    if (!(pad <= px && px <= this.W - pad && pad <= py && py <= this.H - pad)) return "frame";
+    const fx = px - this.origin[0];
+    const fy = py - this.origin[1];
+    if (!(pad <= fx && fx <= this.W - pad && pad <= fy && fy <= this.H - pad)) return "frame";
     const list = this.grid.get(cellKey(floorDivInt(px, P.cell), floorDivInt(py, P.cell)));
     if (list) {
       const s = this.segs;
@@ -285,7 +291,7 @@ export function placeLabels(svg: string, doc: LabelDoc, cfg: Config, opts: Place
   });
   const sizeOf = (lb: Label): [number, number] =>
     opts.sizeOf ? opts.sizeOf(lb, labels.indexOf(lb)) : halfSize(lb, width, W, cfg, P);
-  const world = new World(obst, W, H, P);
+  const world = new World(obst, W, H, P, opts.origin);
   const labels = meta.labels;
 
   const lineOf = (lb: Label): Pt[][] | null => {

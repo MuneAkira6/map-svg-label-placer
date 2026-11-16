@@ -47,12 +47,13 @@ export type SvgPlaceResult = {
   warnings: string[];
 };
 
-function rootSize(svg: string): [number, number] {
+/** The map frame in user units: min-x, min-y, width, height of the viewBox (or 0, 0, width, height). */
+export function rootFrame(svg: string): [number, number, number, number] {
   for (const el of walkSvg(svg)) {
     if (el.local !== "svg") continue;
     const vb = (el.attrs.get("viewBox") ?? "").trim().split(/[\s,]+/).map(Number);
-    if (vb.length === 4 && vb.every(Number.isFinite)) return [vb[2]!, vb[3]!];
-    return [num(el.attrs.get("width"), 0), num(el.attrs.get("height"), 0)];
+    if (vb.length === 4 && vb.every(Number.isFinite)) return [vb[0]!, vb[1]!, vb[2]!, vb[3]!];
+    return [0, 0, num(el.attrs.get("width"), 0), num(el.attrs.get("height"), 0)];
   }
   throw new Error("no <svg> element");
 }
@@ -77,7 +78,7 @@ const inAny = (t: SvgText, ids: readonly string[] | undefined) =>
 
 export function placeSvgTexts(svg: string, cfg: Config & { svg_text?: SvgTextConfig } = {}): SvgPlaceResult {
   const tc = cfg.svg_text ?? {};
-  const [W, H] = rootSize(svg);
+  const [X0, Y0, W, H] = rootFrame(svg);
   const warnings: string[] = [];
   const boxOf = new Map<SvgText, Box>();
   const texts = readTexts(svg).filter((t) => {
@@ -129,6 +130,7 @@ export function placeSvgTexts(svg: string, cfg: Config & { svg_text?: SvgTextCon
     decimals: null,
     sizeOf: (_, i) => [groups[i]!.hw, groups[i]!.hh],
     skipTextAt: new Set(texts.map((t) => t.start)),
+    origin: [X0, Y0],
   });
 
   const moves = new Map<SvgText, readonly [number, number]>();
