@@ -24,7 +24,8 @@
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "oracle": "python3 -I -X utf8 reference/oracle.py"
+    "oracle": "python3 -I -X utf8 reference/oracle.py",
+    "regress": "npm run build && node scripts/commons_regress.mjs run"
   },
   "devDependencies": {
     "@types/node": "^22.20.5",

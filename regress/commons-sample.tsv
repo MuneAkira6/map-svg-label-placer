@@ -1,0 +1,365 @@
+# 360 SVG maps drawn at random from Wikimedia Commons on 2026-11-16: 60 from each of six "<language>-language
+# SVG maps" categories with their subcategories to depth 2 (column "category"), seed 20261116. Categories
+# "… by Our World in Data" were left out: thousands of machine uploads.
+# The files are not in this repository; scripts/commons_regress.mjs fetch downloads these exact versions.
+title	sha1	bytes	category
+File:Cape to Cairo.svg	3da116eea93c78a2b71072ffd9ebdc1fb2c237da	66084	English-language SVG maps
+File:CIA Secret Prisons.svg	fdcf0dfd7c08e1a946e07f7b60c627289d8319f3	267841	English-language SVG maps
+File:Hecataeus world map-en.svg	789dcd05ebbab92c06d48af778b90d81d8fb7f81	86893	English-language SVG maps
+File:World map of countries by number of cigarettes smoked per adult per year.svg	12d3da19ef69f830b55b22249341fefca5267c5f	1701735	English-language SVG maps
+File:Costa Rica map of Köppen climate classification.svg	e2d411b99673da83f06ef7508ad53539020c06d7	56333	English-language SVG maps
+File:Finnish railroad network-en.svg	52c9586be3525423f581c1a548fdca89e1ec9be6	230170	English-language SVG maps
+File:Map of Los Angeles and Communities with Names.svg	e9c5eaa0c9a61fc7ec1e648035b003db2300f4a1	272314	English-language SVG maps
+File:Median Empire-en.svg	2804bbcaca66a648ab2637e491890da7d3d63670	1869336	English-language SVG maps
+File:Seoul subway linemap en.svg	bb073866bd303c3dd209805fc846233c646d84d2	225299	English-language SVG maps
+File:Distribution of Chagas' disease-ar.svg	63406b7092cfaaee4f45c1d148c34e273067ee8c	336540	English-language SVG maps
+File:2011 Finland parliamentary election.svg	37e062f095e241d0522453c09791a4eff530e2b3	694286	English-language SVG maps
+File:European Water Polo Championship 2010 participants - en.svg	1bc22d0b3ac6adf62b3efb27f259a44d3bda6344	534674	English-language SVG maps
+File:Districts of Botswana en.svg	a59297e4a9075cc0bf150672e0dfcef9c7e2c142	70418	English-language SVG maps
+File:Battle of hastings1.svg	a3265ab0fd6aaf588045393556c9133d3267f0b8	107307	English-language SVG maps
+File:Mackinac Island topographic map-en.svg	78d80b354adbaa929d96eff2ff2eb70d95ecc5be	468087	English-language SVG maps
+File:Finnish railroad network speeds.svg	96d85c933adc18a36bb7944f144e85d0b0b28455	251480	English-language SVG maps
+File:USA Obesity 1999.svg	459e4ce2e5d742eda6a3aa1309289fa100caa54f	91820	English-language SVG maps
+File:Hadrians Wall map.svg	eddfe6af24d34134bcb086dcbf59cc85f4c68abb	231720	English-language SVG maps
+File:Bulgarian motorway network en.svg	bad3aec56b82665deac9eebbe4fd69f145f5f657	270385	English-language SVG maps
+File:MTR map.svg	7976bca3332dc5abd916baf182a1d7ae12ed8798	17672	English-language SVG maps
+File:2015 Finnish election map.svg	6c2ea249455043c50a92cb81bae3fa61f76e25cc	565246	English-language SVG maps
+File:2011 Battle of Sirte.svg	cdf650286b54f7af14b4201d813563ddf2ceab67	56983	English-language SVG maps
+File:Norman-conquest-1066.svg	7b5556f7f3feb823015a6d74fdabbc0cf3104b12	1767657	English-language SVG maps
+File:Map of the Port of Tianjin and its Approaches.svg	1f0b6e360eb094f8e4ca765ed8ff5b0f6ef4df3f	688165	English-language SVG maps
+File:Kazakhstan map of Köppen climate classification hu.svg	d44a514bd918fb2884133fbffacae7142afc059b	119551	English-language SVG maps
+File:Land Grant Colleges Map.svg	4563443ea8aadf226dee8d7972b1cec8714f00ac	457513	English-language SVG maps
+File:Melos Sparta and Athens 416 BCE.svg	d52915715a1bf5f703d64607dd0ea94901e246b2	164327	English-language SVG maps
+File:Imperial Palace Tokyo Map.svg	7b7739f852ed1ef255cb81b93345b51d467db1f1	393641	English-language SVG maps
+File:Super Tuesday IV 2016.svg	bd2ee07a6fd18d53a9e4044a2cc38ed6ae63a1cb	70940	English-language SVG maps
+File:China-Manchukuo-map.svg	1d9153857e1f19b3334b6a11344208b890a06d36	287834	English-language SVG maps
+File:Julian's campaign-en.svg	1dffd09528e76d0a301d65ff39427aed815fdc78	642215	English-language SVG maps
+File:Sirt Front-final.svg	85bfcccb915671341f1a6b1e222982393beeb41e	324044	English-language SVG maps
+File:Anglo American War 1812 Locations map-en.svg	19bda01f645c876af0468bd4cdbefb523ae964ae	139172	English-language SVG maps
+File:Serbian Despotate (1422)-en.svg	f58ab368e29453d6c6dd252597b4695469ed84f3	342320	English-language SVG maps
+File:Languages speakers in Morocco.svg	26514b5c78b7b817675e8d5ae2f3333be4f9a918	133501	English-language SVG maps
+File:Map of the Crown of Aragon.svg	7dcd9ed939f549ba277338336d08951c12f9b094	568944	English-language SVG maps
+File:Anahim Volcanic Belt-en.svg	c8e9e88defa4ac78c561c82ac2058b855c309ecc	739934	English-language SVG maps
+File:CretaceousIndiaBriggs.svg	63be1fb90291b41b5bbf4996fdbfa0ffd491def9	17170	English-language SVG maps
+File:2014 ebola virus epidemic in West Africa.svg	2e6d96c0464639132fb6262f2f01429f743a5caf	408740	English-language SVG maps
+File:2013 Inflation rates map of the world per International Monetary Fund.svg	53a5d36e5ea1cd9fd74e4f6c6bf917e3b80598b8	1629634	English-language SVG maps
+File:NCAA Women's basketball Tournament invitations by state 2010.svg	0101c87e3c26f39f9ef7263eef63ffb04e6733cc	630119	English-language SVG maps
+File:Map of American urban areas by size.svg	cff55e02ed92f7c8617f8c509f9877ad8c646c7d	403103	English-language SVG maps
+File:Map of London, 1300.svg	16d7da8f29fd8f7a6a923e052cb2c7d89338150a	300602	English-language SVG maps
+File:India Assam COVID-19 map.svg	1316776ddb493a6c988c9162c9ab45ea8b000b27	794537	English-language SVG maps
+File:North Korea map of Köppen climate classification.svg	85ce2bb6d8f1b41116b1d6f0727930caf5364f9c	90127	English-language SVG maps
+File:Municipalities of Georgia by Population’s Predominant Gender (2014).svg	138e8b7752cb479e062876a79717e986f062c459	1327045	English-language SVG maps
+File:Democratic Republic of Georgia (en).svg	04feaa91547ca574340ed90a1e8b8d5866734e3d	950207	English-language SVG maps
+File:Belize, administrative divisions - en - monochrome.svg	c4322cfa003180b093c9b92e2a13598001ffa490	181220	English-language SVG maps
+File:MapOfWWIEasternFrontAutumn1914.svg	7b30e8fe0c6f3032ed68a9ec80fcdebb950d3c4d	905047	English-language SVG maps
+File:South Africa map of Köppen climate classification.svg	a1b1d3eaede78e09c3a1e898aff68a87b94d65f9	256344	English-language SVG maps
+File:Percent of Christians by Country–Pew Research 2011.svg	c19d785826ff6508688b177c5a8c612e81f70c1b	1743321	English-language SVG maps
+File:Baltic History 5500-BC.svg	8f85d0ae9e9cfb020280a78c2a9ca9a6831fa2f2	833451	English-language SVG maps
+File:Philippines map of Köppen climate classification.svg	5d18fe9b01426cb009d700812fcdfd60a8f743c0	182607	English-language SVG maps
+File:US 50 states Köppen.svg	9231f92040942296ea01a2eb419ad448fc67ef2f	5671571	English-language SVG maps
+File:Map of the Tivoid languages.svg	4831ccbcc5c0c6c231d248d79012040a9cf185b7	21184754	English-language SVG maps
+File:MLB Blackout Areas.svg	d6208b22dd9b1489f0d26f68a89e697893ffcb1a	1022791	English-language SVG maps
+File:Poland airports 2010.svg	fc78b3002061b88837de59ef6f7203b93a47dfee	174049	English-language SVG maps
+File:Battle of Muret Map - en.svg	bcba5063ea03f9e95996b7fbc274ae1840fe877f	56814	English-language SVG maps
+File:Sicilian Expedition map en.svg	57cab1f8c77d5ac360143cd0db5c68adaf40660a	179450	English-language SVG maps
+File:Map of Europe with indication of the directions of the traffic of Etruscan and Greek products - (English language version).svg	e76f865e881a0486434a5245d304cb35422f919d	1107539	English-language SVG maps
+File:Indien Sprachfamilien.svg	149a5ca4c238912a4c213342051da1ed1722b71a	298541	German-language SVG maps
+File:South Korean Legislative Election 2012 districts-de.svg	fb0c5eda5b71cc9c18159a85a2e47f7d41cb7bd2	258170	German-language SVG maps
+File:European Union (+OMR), administrative divisions - Nmbrs (multizoom).svg	7e39d0682c33bfd6bf5591b96127aa1c57902d9b	5491367	German-language SVG maps
+File:European Union, administrative divisions - de - colored (EU labeled).svg	6987120b3c0505f6ff4dc6b445e8f37fd9ab93bd	4109261	German-language SVG maps
+File:Section Troy-Hisarlik-de.svg	c9bc91bf09a1d6f6001aa3372950c735f595ac2f	57844	German-language SVG maps
+File:Plebiscite southwest Germany 1970 de.svg	717e9a8d55ce35dd70427783ebad89da08e4d7dd	460262	German-language SVG maps
+File:Bundestag 2009 FDP.svg	95e5f187343fdab4c9b15cb0367b421408ebfb72	1339337	German-language SVG maps
+File:Mauritius Island topographic map-de.svg	c19278cc20e8c68952dfb79cf9332145e32f6659	2024010	German-language SVG maps
+File:Landkreise Bayern Metropolregion München.svg	9197bd677064004efa17fd2cbc233d08f14217c8	459485	German-language SVG maps
+File:Northern Ireland relief de.svg	25ed6249683dd7b9588134cf17d203948bbafd4a	2954293	German-language SVG maps
+File:EastJerusalemMap-de.svg	64595bea6731d589431f6afc00085d02fd7113b6	89533	German-language SVG maps
+File:Ohrid and Prespa lakes topographic map de.svg	8bdaeb8424f743e9dd648efa3835fcd2ac9b57af	5027952	German-language SVG maps
+File:Grosser Garten Dresden OSM-Karte - 2014-04-29t.svg	95f3d45257ce24ec59a616ae170827f545bce97b	6262097	German-language SVG maps
+File:Golanhöhen.svg	2f260c211e8d23d6bf018200906e6bb6ddf8e8c6	343290	German-language SVG maps
+File:Indische Parlamentswahlen 2009-3.svg	3dd1f4352fa9075aa89d8abb5f9012c529e89562	10276258	German-language SVG maps
+File:Wahl zum Berliner Abgeordnetenhaus 2026.svg	0fbee55da99175786acccb0df0129c8695790174	3163638	German-language SVG maps
+File:Province Posen divisions PosenOst.svg	2cec02a6a141ac38c88ddadf9b7b669c5566c421	451023	German-language SVG maps
+File:Indische Parlamentswahlen 2009.svg	a3e2176d60bf88fffecc7652f18a4372f9b1c80c	8686609	German-language SVG maps
+File:Vietnam war 1957 to 1960 map de.svg	34034c3bc6521bc7a6b76348afd5f6af847e69aa	2150105	German-language SVG maps
+File:Oppidum entremont map-de.svg	ba6e7218ca63cb60e13d5714b6a67ae26f4aa34c	124862	German-language SVG maps
+File:PQ18-Karte-DE-1942.svg	2c3e16dfbe8218ee8f2c9deec1e7f345944ff56c	1029436	German-language SVG maps
+File:Sukhoi Su-24 shootdown Syrian-Turkey border-de.svg	6590ba0f8f3ec503beba667d61a45fc6b3ece5d7	81395	German-language SVG maps
+File:BritishMandatePalestine1920-de.svg	675bdec399041d45fcc08aa6b3aeca6adf917faf	19837	German-language SVG maps
+File:Map of Northern Fleet bases DEU.svg	db8ac751ea3e9b32d47ac1249084ad0d9815107e	57716	German-language SVG maps
+File:Naturpark2.svg	1e46947289d002ccf95854c7e0b1cb9a049b1b0e	149221	German-language SVG maps
+File:Resultats Eleccions al Parlament de Catalunya 2006 de.svg	ffb9fafebbb6f2aeae2113be06a8400c3ee8da5b	262276	German-language SVG maps
+File:Gujarat map with Gir Nat Park-de.svg	806425dc54a403a8f1dbed32199eee8df73b9081	448713	German-language SVG maps
+File:South America, administrative divisions - de - monochrome (cropped).svg	9bab139425d0379cbccbc9adc2bf097336615000	2990029	German-language SVG maps
+File:Peninsule acadienne (multilingue).svg	2218cc6425b064d9f15ca5360a6f70996e064d5d	1264717	German-language SVG maps
+File:Deutschland aus Berliner Sicht.svg	ab7e8aa33e25ad7e5c82f616b0b0884202bfc8e7	455428	German-language SVG maps
+File:Jan Sangh 1962.svg	76103369732d71366d78024572d6d82c275f11a3	1208588	German-language SVG maps
+File:Altstadt Jerusalem Übersicht.svg	8633fb49edfe81a786009835f298f0838cbe108e	173117	German-language SVG maps
+File:Mauern und Feldmuster Mallorca.svg	4d17f6892f4755f20c98a23fe662be8483c7ba4b	6592129	German-language SVG maps
+File:Williamson p16 3 de.svg	30fd4041835790189a6d602d33f36920ad9417fc	261246	German-language SVG maps
+File:Corrections eau jura-3-de.svg	d0359fda0b6cb6e0129a506fb6228d00d2e60d2c	24602	German-language SVG maps
+File:Kontinentaldrift Indiens.svg	8d2db1685f6aa905624b7d605422ce0bb4c22b63	166191	German-language SVG maps
+File:Second World War Europe 11 1939 de.svg	7136515ece3cb18fd3030d197a1b9c27c4fad911	1044836	German-language SVG maps
+File:Prohibition in Indien 1954.svg	49698807c281626d7b2e663e2be49ef0429f84bd	180053	German-language SVG maps
+File:2016ROCLY-cartogram-de.svg	83ba087bc50703de67c3a605cb09c750e4b768f2	40431	German-language SVG maps
+File:Enclave de.svg	17fbe269ee2cb3f7708d93df2affa61a32e7de87	27828	German-language SVG maps
+File:Ile de France departments 1968 evolution map-de.svg	8280447a4810e742b6342d8bb6bca77698e2d1d9	370875	German-language SVG maps
+File:Gulag location map de.svg	8f1034945ca075dc1b202aca89b4c2ce39a75bee	1186481	German-language SVG maps
+File:Kreis Stallupönen.svg	a27dd7aeae5ccfc56fe14e10af7b57c8fda9b917	1082518	German-language SVG maps
+File:France Flanders language-de.svg	b023b2b68b69ffee78af8f6676f18cbb85c27945	121601	German-language SVG maps
+File:Carte-ORTF de.svg	aec82be1d932a5ed8e72db927adce664bf5c1d5b	215681	German-language SVG maps
+File:Galapagos Islands topographic map-de.svg	f5d4c3e06e45d2f473d8cfbc8389b8feb0c9b5f2	2744288	German-language SVG maps
+File:Resultats Eleccions al Parlament de Catalunya 1995 de.svg	d90de53a97866a337428c1e757fa99f7f7f326fe	262749	German-language SVG maps
+File:Western sahara walls moroccan map-de.svg	c4f1665348348e26b676120ba10515cf62d142f2	236150	German-language SVG maps
+File:Bengalisch-Assamesische Schrift Verbreitung.svg	fd0fd001dbdac704d9f775273681f1d2cf74f011	410645	German-language SVG maps
+File:Europa biogeography regions Ukraine de.svg	d744fba4b903950d24e10aaedd854d4e6b2e3e16	703809	German-language SVG maps
+File:Czechoslovakia 1930 linguistic map - de.svg	b96e55d6b0ddebb4f01e0c1d78c4a2fe207ebac2	758017	German-language SVG maps
+File:Indochina 1976-1978 map de.svg	326303982282e09ece733be06c8ed703ed5ac980	2012547	German-language SVG maps
+File:India annual rainfall map de.svg	754339729b68e01efae35dfc7b7a2830e0c09f3d	306516	German-language SVG maps
+File:Wahlkarte2 Folketing Dänemark 2019.svg	6413237b83d3d2ad6ec82fee3822e112d4d8133c	1113412	German-language SVG maps
+File:Georgien-Parlamentswahl1.svg	058fcfd69d53662277457e61d52d77af51eaf2f1	628697	German-language SVG maps
+File:England 878 de.svg	cdd18a244b19e6cc1718f3dd6a625d0d00d86022	1704650	German-language SVG maps
+File:Saronic Gulf map-de.svg	9f6f69b4ad6725112b784defd247766f60255942	827270	German-language SVG maps
+File:Albanian dialects de.svg	7bb48ef07f60e33699495fa4e0a8ffc3f0c01d31	134528	German-language SVG maps
+File:10May-16May1940-Fall Gelb de.svg	90cac59491608c23066cf1c9a2a76e27ad3e87eb	1707762	German-language SVG maps
+File:Map Europe alliances 1914-de.svg	eb26c3a71e808ebaac7698112e982557eae7ed85	126671	German-language SVG maps
+File:Zambezi river basin-fr.svg	262aaf67333c17c053a3334e7f994897c435862e	2222860	French-language SVG maps
+File:RP Chine administrative.svg	abd08b23bdaa4e98c80114213657af69cf03c715	271401	French-language SVG maps
+File:Conquête de l'Islam à la chute des Omeyyades.svg	0ccca345c11b49238d0d40663f1342cb0d291d02	544181	French-language SVG maps
+File:Corfu topographic map-fr.svg	21418bfa27fd341f55383f7ce0f9bfa2567692d1	2579803	French-language SVG maps
+File:Les Micmacs (multilingual).svg	1632f310240ca3729f3c58d808c344592b09cfb2	466097	French-language SVG maps
+File:Première République tchécoslovaque.SVG	fe7be1caa07429308ace4e8f70b9b702cfb21cf3	69233	French-language SVG maps
+File:Fundy National Park topographic map-fr.svg	34481ededbd1bd979cba7921434e139eac979641	5623467	French-language SVG maps
+File:Dinaric Alps National Parks map-fr.svg	9aee8aeeed0f010c08c6bda0ecf0b35f1a1122a4	3660956	French-language SVG maps
+File:2014 European Women's Handball Championship.svg	aae24c2a011d21fc391a64f73a3f577930d6709c	234378	French-language SVG maps
+File:Prince Edward Island topographic map-blank.svg	25bf929f2c8c505d753d9c8c3a3997d9770dd571	5200149	French-language SVG maps
+File:Régions d'Afrique.svg	88e1a8598a328784a0aae9ca3d96cdb068e25f52	984839	French-language SVG maps
+File:Tibesti population-4-fr.svg	5b9c6f8160feeaf3c9da7008460cd4685b47184c	4083882	French-language SVG maps
+File:Anaximander world map-fr.svg	c866ecf5d76a5eac36a24fb047e579ed7101ae9e	14120	French-language SVG maps
+File:Map Crusader states 1165-fr.svg	5e2e5d684ab119644fd56406f494486560209970	551018	French-language SVG maps
+File:The battle of the Atlantic 1941 map-fr.svg	f427300bc8c43e5d9ab960deac22cad9f438d522	421026	French-language SVG maps
+File:Vieux-la-Romaine - Plan général du forum.svg	05791001784b1f6cdca6cba1163d0a236b5bcf0d	40356	French-language SVG maps
+File:LatinEmpire-fr.svg	74f76f56d3232d7deed7d408c9a31b1206c51019	2845933	French-language SVG maps
+File:Serbia NATO bombing 1999 location fr.svg	6193993d0b7696cdfa6ef52c36e3508f0305fcaa	790869	French-language SVG maps
+File:Notaden melanoscaphus map-fr.svg	b454bd371679fffb9f1971ba486160d8bbdc41cd	290002	French-language SVG maps
+File:Madeira topographic map-fr.svg	582765eae56539e9d325ab822cb9d20124af9fc0	376110	French-language SVG maps
+File:Knowledge of French EU map-fr.svg	3dee12fc87ad6143b9365dccd0b42295206d98b2	566125	French-language SVG maps
+File:Anahim Volcanic Belt-fr.svg	34d80f5d5b8bd7ec82cb55efd7f1201cae54c82d	836205	French-language SVG maps
+File:Map Crusader states 1197-fr.svg	399f281242573e570417919855062af80e44ddee	610413	French-language SVG maps
+File:Plan Exposition au Bruit LFML-Lden50.svg	ea427097b6856b6402731ed0e0bc9f9ad5c9b9fd	718852	French-language SVG maps
+File:Pseudophryne corroboree map-fr.svg	a3590832ddfa652164eb8b4b6bafb4fdba01044a	312044	French-language SVG maps
+File:Andorra topographic map-fr.svg	6cbe64351256ef2e487debe1e4ffc3a4aced9fa0	1661123	French-language SVG maps
+File:FranceEuroCirconscriptionsMassifCentralCentre.svg	d47a9b99f37c1d4aa647e090a93eaf2f8c27157e	50199	French-language SVG maps
+File:Grisons 1860 linguistic map-fr.svg	f1cf4c0ff0d943596b0208215da74779e614fbd4	104649	French-language SVG maps
+File:Le royaume des Francs en 567.svg	584c0c72bd7bb023bf4ee93a000b8ca4c4625746	211850	French-language SVG maps
+File:Karte Senegambische Steinkreise-fr.svg	f41ce1d1eee3b4827fa31d7deab96d1926ee2d29	183346	French-language SVG maps
+File:Colinas Cartagena-fr.svg	97ff65234ba1c8c9464754a517a00eddeb56e06e	44580	French-language SVG maps
+File:Antarctica Farthest Souths-fr.svg	f1b2ca402619fc82564d7d23e418d2c8006397b7	96390	French-language SVG maps
+File:Mountains of New Brunswick topographic map-fr.svg	a3d7499053cca0308d03e413678cbdaeb66da5cf	3351557	French-language SVG maps
+File:Carte topographique Haut-Lamèque fr.svg	85530aa520454eb7b7572167181d749f4c5a21cd	290767	French-language SVG maps
+File:Alexander III conquest from Issos to Babylon-fr.svg	ca090bc1099cc63ca7c91e627e62003fcafaae71	1090265	French-language SVG maps
+File:Roman-Persian Frontier in Late Antiquity-fr.svg	28b03112483217a3de76dcb0a43b994bea25d514	869054	French-language SVG maps
+File:DEP45 Orleans StMarceau.svg	bab3e2b8e44fe2c34ad726e18e8d3f0a218a0c0c	317676	French-language SVG maps
+File:Bissy 1921 map.svg	94a62974f103bc2186ba7f187690c0cf809b7ce8	110515	French-language SVG maps
+File:Principali battaglie seconda guerra punica-fr.svg	ded75d3754b6f539a767b9bce87bddc9c847e398	689002	French-language SVG maps
+File:Établissements publics de coopération intercommunale du Rhône 2015 map-fr.svg	0338819f24df28f664a1d56cb60d10210f48d440	1006628	French-language SVG maps
+File:Laurussia fr.svg	91d24f919728a7ddce0094ba07074ef158198727	615348	French-language SVG maps
+File:Carte Qibya.svg	9888a7191bc0a50417786612f4fd714857310557	62851	French-language SVG maps
+File:Touggourt territory 1934-1955 map-fr.svg	968719dfd3aa63072682fbc23f2fbee000ecc15f	1877771	French-language SVG maps
+File:Sumatran Rhino range-fr.svg	0edfb096457c35accd99a99d74baeec61061cbf9	913705	French-language SVG maps
+File:Dynasties du Nord et du Sud.svg	de15687c699e32dfd40197098b56f4686f4bfb01	1434257	French-language SVG maps
+File:Piris Reis expedition map-fr.svg	954bb0944f33c9501f758e6bf14dc5ba35f1fc91	76956	French-language SVG maps
+File:Map of Eparchies of Serbian Orthodox Church-fr.svg	499b11ce774136825f446a99380f936d4631873f	298458	French-language SVG maps
+File:France location map-Departements 1808.svg	abb168db8a664d9ac80710dd98003ab0b4a4c3c6	888741	French-language SVG maps
+File:Mixophyes iteratus map-fr.svg	855033b220ec332132ef3cd4cc81d20c2c51ab3a	296972	French-language SVG maps
+File:Alps-Mediterranean Euroregion 2007-2015 map-fr.svg	5e19fb6981e0e3e4a1c5d828ac2f8c0dbd7eddca	348692	French-language SVG maps
+File:Régions physiographiques Colombie-Britannique.svg	b6c0b6bc50f908ecfc2eada3002ec8828f4b45f0	42954	French-language SVG maps
+File:Normandie - Haut-Empire romain - Principales voies romaines (état de la recherche en 2022).svg	4b30f570d286a0bd1339c5ccf0ba84eff022c847	332491	French-language SVG maps
+File:Wfm area51 map fr.svg	80781037ffb40da0233f0ecf590cc2d13236ed08	2846444	French-language SVG maps
+File:Map Bulgaria Simeon-fr.svg	417f61eace7c949007949a6be5bb1ce929e8d88b	86624	French-language SVG maps
+File:Plan forum dougga.svg	f687247b3c738983072825bbffc52c4ed642eb26	161385	French-language SVG maps
+File:Carte du Moyen-Orient2.svg	a6add475271167a5c50786b779c8de47c404b161	5397092	French-language SVG maps
+File:Map Crusader states 1240-fr2.svg	c9f2b3d4b15b5446490d596b47f4b9f7ba08354f	541628	French-language SVG maps
+File:Maritime boundaries between Channel Islands and France-fr.svg	aed4af51ffb1232f684e21429520c230cb26ae27	212118	French-language SVG maps
+File:Mantidactylus brevipalmatus map-fr.svg	11e7fc3f522dead075b958439c79cdf78e10cd0e	520667	French-language SVG maps
+File:Austrochaperina derongo map-fr.svg	60f766cf4d3b97e6a989d9f99cced7fc20c42c87	395706	French-language SVG maps
+File:Саратов 90 автобус.svg	e87c8f41fb0e05ebfbca99b377bbbaaba172522a	317346	Russian-language SVG maps
+File:Constantinople-ru.svg	7ade719f88badc89879000904b634e0890ba4739	11760	Russian-language SVG maps
+File:Map Greco-Persian Wars Xerxes-ru.svg	eae2a355e723bc0428e121ef533c3c3448d830b8	4142761	Russian-language SVG maps
+File:Road around chelyabinsk.svg	4dab99a0eba8e2d408dba3c73a1004c516705483	66265	Russian-language SVG maps
+File:Города Казахстана.svg	383ea4d5efa19bb931f5aaf0d96a1abd686634b9	183550	Russian-language SVG maps
+File:Map Lands of Bernard of Septimania.svg	61a3f9b00a08189e1736a359d74336d9fe8de649	317955	Russian-language SVG maps
+File:Map of Rome and Carthage at the start of the Second Punic War-ru.svg	c20ec48afaef880b68d452f1de63a928742684f6	365510	Russian-language SVG maps
+File:Хаджимирогуллары.svg	c3d9bed63ee40f4ba78d87b0fa01b22276ac2e62	2454861	Russian-language SVG maps
+File:Kabylie topographic map-ru.svg	05a5305f8a6999adfae7f5306ed7a4bc141ceb4b	5207732	Russian-language SVG maps
+File:Battle of Long Island, 1776 - ru.svg	97b70d971b5ab172c7e6bc128ea70b3b6bbfb465	519985	Russian-language SVG maps
+File:Orhan I area map-ru.svg	adf35890afddb7a120911aa6ffb70474de1d1d78	112526	Russian-language SVG maps
+File:Uruguayan War-ru.svg	6954cdc0dca4e3e7fb9d1a2ec455eb30f13f2870	221985	Russian-language SVG maps
+File:Grunwald (end) ru.svg	fc9c3f55b2b167401e75d3eac183a66c6a1e9c15	362863	Russian-language SVG maps
+File:Mongol raids into Syria and Palestine ca 1300 ru.svg	821f4e022f416ec9b8f783c73c078a0d157422d7	85926	Russian-language SVG maps
+File:Nicaragua canal proposals - ru.svg	5e7727893646755faeb8968b527c98d2a8b4a25e	729807	Russian-language SVG maps
+File:Map of Mozhga Districts ru.svg	a69e6a5f492ea587a82d375f11bae0a6f0574f12	73233	Russian-language SVG maps
+File:Peloponnesian War ru.svg	5c35dd89f12be34e208d34a9a90cab65d950cf70	524446	Russian-language SVG maps
+File:Minoan Crete topographic map-ru.svg	b102f407043fde24555312d502945809df522937	2599795	Russian-language SVG maps
+File:Карта государств Германской Империи (1919-1937).svg	d77ea9e401b54efa64793481c83363c99c98f87f	535872	Russian-language SVG maps
+File:Caucasus 1213 AD map ru.svg	ec9e46114fe22454c22ac64688057fe225a2aeeb	4720175	Russian-language SVG maps
+File:Map of region of Trentino-South Tyrol, Italy, with provinces-ru.svg	4d055245ec63b0ca79bd8120b65e66f2ff6e9e2a	108650	Russian-language SVG maps
+File:Antarctica, administrative divisions - ru - colored (explicit).svg	e2b4b80b2088528b3a7c303e0d906cfa9cd21bae	1144198	Russian-language SVG maps
+File:Northern Virginia Campaign (as of August 22, 1862) - ru.svg	69d33319b50a10baa6181c133b31ee09864b9e0e	510982	Russian-language SVG maps
+File:Biafra independent state map-ru.svg	fcda55c6ad386ba43a77bdf6c34439133ae32911	465791	Russian-language SVG maps
+File:La Bourgogne aux XI e XIIe siecles ru.svg	7dceed6dbfe5cefb6310ea1efd11ee807e93897a	310796	Russian-language SVG maps
+File:East Ukraine Conflict RBK.svg	279a0b69896c5cd8bebe17959858e2f55c407791	2075190	Russian-language SVG maps
+File:Afsharid (1736-1802)-ru.svg	64b00c9107075af196b2425e5a376cdd77609e78	628737	Russian-language SVG maps
+File:Приобретение территорий после распада Югославии.svg	78304005337c25af56a46e40a06baefd5a7237ee	56491	Russian-language SVG maps
+File:Окрестности Нарвика.svg	3c7a275ccff8db9b798cbced2bda89f15b8ccd35	527872	Russian-language SVG maps
+File:100 Years War France 1435-ru.svg	f1ff69b077ad8cbde20c07e3bf69ccc476ffc08d	60676	Russian-language SVG maps
+File:Ставропольская губерния 1900.svg	b8d380ee1679df584a09d4965a69ccf107318085	34865	Russian-language SVG maps
+File:Bangladesh divisions ru.svg	f87e966c54778dec78b0a3b061548629577f0ab9	4043789	Russian-language SVG maps
+File:Джандариды 2 бейлика.svg	99bea71e644abddf83481c47f633f8c66c734079	2907498	Russian-language SVG maps
+File:French Polynesia relief map RU.svg	cec78dbbaae7bfc94519395a265f88c69262876c	1500804	Russian-language SVG maps
+File:1352+ рамазан.svg	9fa07d3e827735d6fbca9cb0f48db1a9f5f6c099	1895914	Russian-language SVG maps
+File:File-Mexico 1835-1846 administrative map-ru-2.svg	4bc6b547b9db037d4f3a4fd760c46a30ae5ffb13	430906	Russian-language SVG maps
+File:Carolingian empire 863-ru.svg	93e268e7059f46cf350e9acdf34a80a992963208	156812	Russian-language SVG maps
+File:DariusScythes ru.svg	7d61e947da6802e6d232c88fae8901a4ae3eec19	3152197	Russian-language SVG maps
+File:Map States Philaretos Brakhamios-ru.svg	1f07f3784e4289edd17fdb2c44a84cf711b384d6	22851	Russian-language SVG maps
+File:Самаркандская область 1900.svg	d500ed3a4b03615f80b6cb62fa0c51b49be28a38	18915	Russian-language SVG maps
+File:The fight for Little Round Top - ru.svg	9f75257c529fa07fbde221db6e192144f3271ebd	33562	Russian-language SVG maps
+File:1301 хамид.svg	7311aa38da4965bae2efb3ebdb0d4e3f09a073ce	2506760	Russian-language SVG maps
+File:Argentina-map-ru.svg	f34c3ae4923979292aafa594aab8d8ab1dfe66c8	230778	Russian-language SVG maps
+File:1256 караманиды.svg	a6a3a1c2ababbbe12b020f956d8e89b4313b2a89	1894744	Russian-language SVG maps
+File:First Russian Antarctic Expedition route - ru.svg	d491e207fc3f50a62ee8df0b4ed4527b23d2e8e5	1748458	Russian-language SVG maps
+File:Chinese Eastern Railway-ru.svg	b4bdc5dc7860de1d3f62502661d4c5b5ca44c5a2	36389	Russian-language SVG maps
+File:India climatic zone map ru.svg	2cd2bc4e23cac65744212f7f886ca2a87b637c88	384262	Russian-language SVG maps
+File:1312 хамид.svg	0fdfe527cea34d3a29ea6442c408572c4da2447b	4126983	Russian-language SVG maps
+File:Regions of Djibouti ru.svg	40d921802f0fbf38210bb32144f2e39a4275fce1	137345	Russian-language SVG maps
+File:Map Macedonia 336 BC-ru.svg	90b617cd0d054bcffaa0d6e6c946b251bde22c40	3446917	Russian-language SVG maps
+File:Benjamin of Tudela route - ru.svg	6876dacf203d3412130ab7499d03500943d36a39	530810	Russian-language SVG maps
+File:Hammurabi's Babylonia UA.svg	673e9b79ff7892472ffff5a4802e56f4d469e8d9	60657	Russian-language SVG maps
+File:Бои при Отлице 21—23 марта 1945 года.svg	82951215f572ddc3cbee26d4e657d98ae9313dc7	1713411	Russian-language SVG maps
+File:Sapudi Island topographic map - ru.svg	c88e466baa0aee31aeca59370bb9d6144492bfe9	484039	Russian-language SVG maps
+File:Siege of Homs (February) ru.svg	45017584993270b2e81c229108b725cebc64f817	712948	Russian-language SVG maps
+File:Italy 1000 AD alt1 ru.svg	1bdc07e82eca4c901de82cd71bf513ecb8c99e2f	188974	Russian-language SVG maps
+File:Indonesia Ethnic Groups Map - ru.svg	3b83f5514b79bbaf7cc2cb1eda8a79a05f78391d	2095538	Russian-language SVG maps
+File:Apollo 15 Traverses - ru.svg	e41517adb137abec60a516a2f40e8bf688a655c9	2866448	Russian-language SVG maps
+File:Samegrelo-Zemo-Svaneti ru.svg	7d3934ea8ab64b71c4ce89d7cad3b5c9525c7032	80901	Russian-language SVG maps
+File:Mount Everest location in Himalaya map-ru.svg	07731145e880c343444f482953b057c4a25ce74a	1369022	Russian-language SVG maps
+File:Maya civilization location map - zh-cn.svg	e77c70ffd0d162290bc18f972098e87339212e89	1596251	Chinese-language SVG maps
+File:欧洲 - 1815.svg	0a5b7997e7991f8b5f90003e27bef75ffc46c463	1161640	Chinese-language SVG maps
+File:2022 Russian invasion of Ukraine; 31 December 2023.svg	395c8edb436a19b9a1c5492e975a391d3e261bf4	3856738	Chinese-language SVG maps
+File:Polynesian Migration-zh-cn.svg	70e3dc16f63ee55fb6691ba508eb915353fe6b7c	730236	Chinese-language SVG maps
+File:Map of Manchukuo divisions zh-hant.svg	22a933a9d2bfa029424acdf394ca618d0c68a0b1	257602	Chinese-language SVG maps
+File:Turkish Strait disambig zh-hans.svg	b3ee9da409c77c85adcc4dfd526bf7d7006e0491	94366	Chinese-language SVG maps
+File:Yerevan's districts-zh.svg	6eb4b16dc9b9977f8ba6b088b78897f414dcdd3f	471724	Chinese-language SVG maps
+File:Winter war red army attack zh-s.svg	90d065a1d753331962f13260273ee97e577223eb	1350076	Chinese-language SVG maps
+File:Rutas comerciales fenicias-zh.svg	1be2fa54cb325e74edc55720c0545d4fa2c0f40c	217234	Chinese-language SVG maps
+File:Ancient balkans 4thcentury-zh.svg	17a4656942a0f1e5889723bdc99c9bdf2e1b87b2	326015	Chinese-language SVG maps
+File:欧洲分区（zh hk）.svg	e02b59d2af4a43ca38e1e7170636245b2dc8ae75	802398	Chinese-language SVG maps
+File:Guangzhou Shenzhen Hongkong Express Rail Link zh-hant.svg	1d37d900abd59633c3b9435f03e371b4d678e7d1	90674	Chinese-language SVG maps
+File:Asia Minor ca 842 AD zh.svg	a85bf5912fb02a093e66daa0001176bb67141b91	1529062	Chinese-language SVG maps
+File:Beiji ditu1 zh.svg	10964d83951276828c04b5196c2188333da99bf2	3673919	Chinese-language SVG maps
+File:Roman Gaul - AD 400-zh.svg	6803522d66c240a1620d808bcf3a41db2285dc47	1494651	Chinese-language SVG maps
+File:Iberia 586-zh.svg	015fff94fdb91c2e586364af7936e17b6e746b61	163827	Chinese-language SVG maps
+File:Diachronic map of the Spanish Empire-zh-hans.svg	17b7f1fb7ea305051d06e1b356d44b2c3e163041	6733080	Chinese-language SVG maps
+File:CrassusSpartacus-zh.svg	15e8568ada81c5e4e9511056ca158bf504c33fff	310673	Chinese-language SVG maps
+File:Dioecesis Orientis 400 AD-zh.svg	3c5be2abaa89097b13d0b2722dba849e4e4e890a	323806	Chinese-language SVG maps
+File:Moon names zh.svg	cb18e750c5cb5ed98db3aa6d3da295f21e80f310	37678	Chinese-language SVG maps
+File:Kaitak tchn.svg	f49e87bab756c841a485d67ae17668fc42bc7bba	235749	Chinese-language SVG maps
+File:Battle of Maoka Map (zh-hans).svg	d53a60a518c7b24bd666437cba7c5fb76fd0f175	2290711	Chinese-language SVG maps
+File:Attila in Gaul 451CE-zh.svg	e56f16933acb2174d938efad7ada1252897718a0	161295	Chinese-language SVG maps
+File:Pyrrhic War Italy zh-CN.svg	6d83901dda002e3ad5bfd12316c073405d5119da	42714	Chinese-language SVG maps
+File:Jingnan Campaign (traditional Chinese).svg	4f334f5701e7fbf3f13bc8a670c66964a846ea9f	2425127	Chinese-language SVG maps
+File:麓川之役-1441年-繁体版.svg	2d77ca0642973f671dccfd8bfbc963c2debc7d22	273193	Chinese-language SVG maps
+File:Alboin's Italy-zh.svg	5b286d3f3ad06fe854546347adfe689a4d8f7c45	38932	Chinese-language SVG maps
+File:Zh cn-Map SCO.svg	495409c8005c5493ddc366332ff3a71c1c79b0ee	788135	Chinese-language SVG maps
+File:Whampoa garden.svg	2a530fd41675a1ba9a23227193b9df6797a09323	347764	Chinese-language SVG maps
+File:Arab-Byzantine frontier zone-zh.svg	6a6d78c051fb7baa383e57619a061115bc646b93	2678614	Chinese-language SVG maps
+File:Byzantine-Arab naval struggle-zh.svg	e2d791ff76b9d90924665cd7381df9c1da2241e2	582738	Chinese-language SVG maps
+File:麓川之役-1439年-繁体版.svg	53efbd26a3e142dafe9b0d2a5e36a0277ff8b97d	157609	Chinese-language SVG maps
+File:Cities of Sumer (zh-hans).svg	d4294278a1b3923086e90a96516cc5da2c480c05	63155	Chinese-language SVG maps
+File:Lahore Metro System Map-zh.svg	f5392b67ea0c7c7fc8da79512a6d00dcea6e4412	13223	Chinese-language SVG maps
+File:Zhuhai stadium pedestrian walkway zhmap.svg	a740b2471fd9388fb8084047fcc8744989c72861	105221	Chinese-language SVG maps
+File:2011年长江中下游洪水.svg	dde8a9ac984f62b6d0b37061152f7010b9928c3c	1291857	Chinese-language SVG maps
+File:Map Cleomenean War-zh.svg	6f3150c06e5c858593c4a8b72132eeb59e4ed742	109998	Chinese-language SVG maps
+File:Bizancio1400AD-zh.svg	41fc54523e527a4d5770e85eeacc980eb6934a46	36396	Chinese-language SVG maps
+File:Asia Minor in the Greco-Roman period-zh.svg	46ef81bc7c34543412a63302ec12f4f3db048bf4	2548282	Chinese-language SVG maps
+File:Jingnan Campaign (traditional Chinese)1398-1400.svg	03bcf9471913c891166c673b748aeac2db2f1595	1413768	Chinese-language SVG maps
+File:100 Years War France 1435.svg	a170ac8b70c1242a9c8855b08661dbe5b3df94ee	183267	Chinese-language SVG maps
+File:AI171 air crash zhmap.svg	cc821dec5f9e1e1101387b4557a04c71781f2f4c	238791	Chinese-language SVG maps
+File:Chongqing Expwy Map(2019-2035).svg	7ed700358fe192e3882562e914ca7d2d8e2575b5	1379620	Chinese-language SVG maps
+File:Magellan's voyage zh-classical.svg	6c1e4f50ca6cb11159040a5a75e667330a7eac86	4544004	Chinese-language SVG maps
+File:Chinese Eastern Railway-cn.svg	2d5d716bb80b7b01567db0863a95c94b2d75479a	43339	Chinese-language SVG maps
+File:Map of traditional provinces of Libye-zh.svg	9399dc1ea939cfaf76e00538b8bcd57dfe1aa973	106335	Chinese-language SVG maps
+File:Roman Britain - AD 400-zh.svg	08ab14f3b13e0cdff752e6e7507a8b624bf15968	781885	Chinese-language SVG maps
+File:Laguna verde.svg	12892710196cd2bf798eb034c12e841dbd4c2864	118677	Chinese-language SVG maps
+File:Srivijaya Empire-zh-hans.svg	40413dec362aa5d4b26dbef8dc3e657f861a135d	300731	Chinese-language SVG maps
+File:Frankish Empire 481 to 814-zh-hans.svg	d8274dac8987db6362f2d07fd36fd1edd464a43e	300805	Chinese-language SVG maps
+File:Pydna-cn.svg	5bdf71a31403b4758d434cc566d7f7f5893b61f9	75728	Chinese-language SVG maps
+File:Roman-Parthian War 58-60-zh.svg	96196a2fb60a4668328cd2423970c0449fc2012b	506797	Chinese-language SVG maps
+File:麓川之役-1436年至1438年.svg	ede348f617fb97c852042034a5961a554f51d8d0	164375	Chinese-language SVG maps
+File:Map of Honshu-Shikoku Bridge Project (zh-hant).svg	6b279cb80caf1c6ad8b86ab958b20f7c90d45545	308966	Chinese-language SVG maps
+File:Enterprise square.svg	439f7cbe8c118c53513f45d371325c0b447d5a6a	129898	Chinese-language SVG maps
+File:Nationalparks in Taiwan.svg	ef9f7a54c2120cdf1db7d58929887ce3d9ba5ebc	709592	Chinese-language SVG maps
+File:Sicily map-zh.svg	82f6fea2e0295b2913966f053ecc0c500ee4f2af	163369	Chinese-language SVG maps
+File:Roman Empire 69-zh.svg	3398963e1042cafd8b7ca87483a0454477f12868	718813	Chinese-language SVG maps
+File:2011年长江中下游旱灾地区.svg	73a60087218e6f02423f485f580908d190bf0637	1434791	Chinese-language SVG maps
+File:Basin of Mexico 1519 map-zh-cn.svg	f7357cff7e04894ea96a9c734fd96f04f95514cb	538866	Chinese-language SVG maps
+File:Tsushima and Korea straits-ja.svg	59f55478b7bb1e699f6c2c1e43c389a4ea1a7f3c	159606	Japanese-language SVG maps
+File:Sendai City major streets Nishikoen-dori.svg	4bfc2804b8fbdbc333fa4e27dabcf9926a1c317d	96369	Japanese-language SVG maps
+File:2016 20대 총선 지역구 ja.svg	3dcf7f3a13facebad824306b851a024dcb521460	599807	Japanese-language SVG maps
+File:Staat.svg	b3da40c0474b790205f336b3d9e1203a2657c241	116044	Japanese-language SVG maps
+File:Seoul subway linemap ja.svg	a61a50caaed60abf942dd4d2c613c902bb8694a3	212365	Japanese-language SVG maps
+File:Orient Express 88 in Japan 3 ja.svg	9f3b304b1796c5fee09da2c5d82085f6c70900e8	175318	Japanese-language SVG maps
+File:Kagoshima city 1950.svg	9732e0f41208171243b8e0513d8990f6e33db724	78333	Japanese-language SVG maps
+File:Sendai City major streets-Aoba-dori.svg	beea21ae4ec36838f4f7ba118604691c298b3c8f	96013	Japanese-language SVG maps
+File:Map of Honshu-Shikoku Bridge Project (ja).svg	199fd0d61e8a8d0da333d4400d190c53fa13d96b	308341	Japanese-language SVG maps
+File:United Nations geographical subregions ja.svg	c4e8a6ee84f1e831d94461a52c871bda47045ee3	1239266	Japanese-language SVG maps
+File:Regions and Prefectures of Japan (ja).svg	1f4a32eef5cddcbdadb5a95d3d3169f0ff51de05	119365	Japanese-language SVG maps
+File:アイヌの勢力範囲の拡大.svg	ae8a1b2b854626c5023cf3eb417b0ad758f77030	131999	Japanese-language SVG maps
+File:JapanGE20014 (ja).svg	4d2012caaffd7502401bac101e2be2f8de2a461e	94691	Japanese-language SVG maps
+File:Treaty of Troyes-ja.svg	8b32d6f112bdd000d41944b4afd279a704617f3d	38082	Japanese-language SVG maps
+File:August 2024 Kursk Oblast incursion.svg	0e1ba10a9034afc4020e0dbb0ea1ed43267724cd	1138053	Japanese-language SVG maps
+File:Kagoshima city 1934.svg	d29afb46588df4798e25d08350fc766cb1fff6a2	78119	Japanese-language SVG maps
+File:Oosaka jr kinoko area.svg	8622670ec5992c35181a94ec14d01c2f8a7ed611	44371	Japanese-language SVG maps
+File:White Nile and Blue Nile-ja.svg	2142de02d2a2c102caa4a250960772c21c41588b	760445	Japanese-language SVG maps
+File:Takeshima Map Ja.svg	31b4bfee5d5932ad2d6c48f7cb14749942b6c7d1	117021	Japanese-language SVG maps
+File:Skyliner route Narita Sky Access ja.svg	64eb4a9c3168c70a2f3b94b659efdc309190e0c6	392867	Japanese-language SVG maps
+File:African language families ja.svg	cb33a568b1c98cfc59507e234aa1ebad28f31335	294759	Japanese-language SVG maps
+File:イスラエル王国とユダ王国.svg	3458c0463669707ffe7e44532f5741f9852e3468	52054	Japanese-language SVG maps
+File:Plates tect2 ja.svg	c2f857c5860dd36ec5aace4290acc116e2d8b6fb	327657	Japanese-language SVG maps
+File:Sendai City major streets Higashi-Nibancho-dori.svg	2814c5a3756344eb971bf0e95b18d1dd959bbca8	96298	Japanese-language SVG maps
+File:Caucasus-ethnic ja.svg	80c444725f2786668610ff15b8ed7ffbc3444830	265688	Japanese-language SVG maps
+File:紀元前830年代のレバント地方の勢力図.svg	4de27e90ab5c5f92e9eb4f1e23fb68366ce5730a	57068	Japanese-language SVG maps
+File:Sendai City major streets Itsutsubashi-dori.svg	fba7d65db02921fc61be8214a9251deacb557e61	96368	Japanese-language SVG maps
+File:AVE map.svg	512d69bd0d76c7af6639faaf42429ec752fdfa4d	350967	Japanese-language SVG maps
+File:薩摩藩における私領と郷.svg	cd48084585c9ac8c404ad4c94db4bb2d6c14b8ba	1151825	Japanese-language SVG maps
+File:Mount Fuji 20170330 (Japanese).svg	f8e98343f5a0ab323c7817b69f19920481647409	2010	Japanese-language SVG maps
+File:Début guerre de cent ans-ja.svg	cb99283410aff7761ef2fc628399344153d0b3db	66320	Japanese-language SVG maps
+File:Traité de Bretigny-ja.svg	6de7f9265fba845b12ed3a8b45b06739ad73d2b9	103881	Japanese-language SVG maps
+File:Caucasus-political ja.svg	139525bfb35e38c17d182bdf1c3637776c65a68a	361771	Japanese-language SVG maps
+File:Guangzhou Shenzhen Hongkong Express Rail Link ja.svg	a2a5eb37b3aef52f324ea198da349bc917887b2f	277069	Japanese-language SVG maps
+File:Japanese House of Representatives Proportional Representation Blocks.svg	ae0d712eaf62b5ce9d3f1c829ba4d4925a0fbea9	796908	Japanese-language SVG maps
+File:Rutas shido shogun-han.svg	75b4f5d5c6430176ee6a6d992e5e508b1b70cc76	134671	Japanese-language SVG maps
+File:Battle of minatogawa-ja.svg	f516496df9fa5ddb96d377c0e04678af20eafaf9	131983	Japanese-language SVG maps
+File:Eesti maakonnad 2006 ja.svg	9e09395344c0f2a5f8b97b0dfae39555d73cebda	445561	Japanese-language SVG maps
+File:ROC Administrative and Claims-ja.svg	682af77c655ae99c141972bd223f0ed912377c33	744326	Japanese-language SVG maps
+File:Georgia, Ossetia, Russia and Abkhazia (ja).svg	7bb78cb062fe27987ff49a4329b11d61dd15bf57	117269	Japanese-language SVG maps
+File:HeiankyouMapJapanese.svg	6cda1f657e215b1d55841fc10d9461e2b17a33da	1335303	Japanese-language SVG maps
+File:1025AD-ja.svg	c343266808d8e08e7327cb67361da476dcb89ddc	46673	Japanese-language SVG maps
+File:Reconquête Charles V-ja.svg	2d3f0e7ea4ab871fff0dac7435b812a4f160bae6	239383	Japanese-language SVG maps
+File:Map of sinitic languages-ja.svg	7956448a20249a048d85b8fd66029acb8152fa2b	927998	Japanese-language SVG maps
+File:World regional languages map-ja.svg	0b38994291aca5ecb81197c25be51c9918d31315	2517662	Japanese-language SVG maps
+File:Orient Express 88 Paris-Tokyo.svg	02c439eba6d649573c865dfa29265cb5e8fb4d5e	221198	Japanese-language SVG maps
+File:Inchon landing map (ja).svg	962296bb8f0d09014bf9b85ce18a7f5dff7ea673	128915	Japanese-language SVG maps
+File:Map of sinitic languages full-ja.svg	05c323b0511c8a9e8f4bc031a8341c903fa42e84	188477	Japanese-language SVG maps
+File:Ten-goMap-ja.svg	21b2fec2a96407f87d570172d72e61e2496825ea	173811	Japanese-language SVG maps
+File:哈密1436 ja.svg	02faee660ebac4f838de98fe5fc05f35cec36936	101047	Japanese-language SVG maps
+File:Helsinki Metro and commuter rail map ja.svg	91e17aeb77c5489d68540f76f5eea1c7c591be6e	134227	Japanese-language SVG maps
+File:Idiomasmap-japanese.svg	82742f261e485420639d23e2f84a89004313b0b1	182524	Japanese-language SVG maps
+File:Map provinces Netherlands-ja.svg	989c8fb33f46b8645980ed7311b9829649244820	563568	Japanese-language SVG maps
+File:Takeshima map ja.svg	145ea226cf74f0229e9e83cdce6909042be2b773	77744	Japanese-language SVG maps
+File:Kagoshima city map 1889.svg	17abb740a187cf43eab5d54c239e5bf39a9f0f66	91816	Japanese-language SVG maps
+File:Orient Express 88 in Japan 1 ja.svg	94696f81ff22c3050e16942ec27d62fb1a978a02	168505	Japanese-language SVG maps
+File:Sendai City major streets-Minamimachi-dori.svg	96073fbbf47fc4b87e65d5219fb0b0da52c06591	97124	Japanese-language SVG maps
+File:Maji Maji rebellion - ja.svg	120560c3e30a907ab0dada02fc71ad66b17d3722	935823	Japanese-language SVG maps
+File:博多古地図20240306.svg	6d59a0f472d6ddc0671363cec36862c477ad7c10	3725113	Japanese-language SVG maps
+File:Map Greece expansion 1832-1947 ja.svg	44b1d304751bc7d13099a62dfa62a8e237d4c059	3535324	Japanese-language SVG maps
