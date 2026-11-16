@@ -45,6 +45,7 @@ describe("fixSvgLabels", () => {
 <switch><text id="de" systemLanguage="de" x="200" y="104">Kreuz</text><text id="en" x="200" y="104">Cross</text></switch>`);
     const res = fixSvgLabels(svg);
     const [dx, dy] = [res.moves[0]!.dx, res.moves[0]!.dy];
+    expect(res.moves[0]!.texts).toEqual([0, 1]);
     expect(xy(res.svg, "de")).toEqual(xy(res.svg, "en"));
     expect(xy(res.svg, "en")).toEqual([+(200 + dx).toFixed(2), +(104 + dy).toFixed(2)]);
   });
@@ -99,7 +100,23 @@ describe("fixSvgLabels", () => {
     expect(crossed(svg)).toHaveLength(1);
     const res = fixSvgLabels(svg);
     expect(res.moves).toEqual([]);
-    expect(res.stuck).toHaveLength(1);
+    expect(res.stuck.map((s) => s.why)).toEqual(["size"]);
+  });
+
+  it("leaves single letters alone: they are mostly the spaced-out letters of an area's name", () => {
+    const svg = map(`<path d="M0 100 H400" stroke="#000"/><text x="100" y="104">H</text><text x="200" y="104">U</text>`);
+    const res = fixSvgLabels(svg);
+    expect(res.moves).toEqual([]);
+    expect(res.stuck.map((s) => [s.name, s.why])).toEqual([["H", "letter"], ["U", "letter"]]);
+  });
+
+  it("does not settle for a place where a line still runs along the edge of the name", () => {
+    // Lines 12 px apart: the middle of the letters fits between two of them, the whole name never does.
+    const lines = Array.from({ length: 11 }, (_, i) => `<path d="M0 ${40 + i * 12} H400" stroke="#000"/>`).join("");
+    const svg = map(`${lines}<text x="200" y="104">Ruled</text>`);
+    const res = fixSvgLabels(svg);
+    expect(res.moves).toEqual([]);
+    expect(res.stuck.map((s) => s.why)).toEqual(["full"]);
   });
 
   it("reports a name with nowhere to go and leaves the file as it was", () => {
@@ -107,7 +124,7 @@ describe("fixSvgLabels", () => {
     const svg = map(`${hatch}<text x="200" y="104">Stuck</text>`);
     const res = fixSvgLabels(svg);
     expect(res.moves).toEqual([]);
-    expect(res.stuck.map((s) => s.name)).toEqual(["Stuck"]);
+    expect(res.stuck.map((s) => [s.name, s.why])).toEqual([["Stuck", "full"]]);
     expect(res.svg).toBe(svg);
   });
 });

@@ -8,7 +8,7 @@ import { moveTexts, type SvgText } from "./svgtext.js";
 export type FixOptions = {
   /** Language the map is drawn in, which picks the version shown in a <switch> (default "en", as Commons). */
   lang?: string;
-  /** How far a name may move, in multiples of its height (default 3). */
+  /** How far a name may move, in multiples of its height (default 2). */
   reach?: number;
   /** Decimals of the rewritten x and y (default 2). */
   decimals?: number;
@@ -21,8 +21,8 @@ export type FixMove = {
   /** How far the name moved, in root coordinates. */
   dx: number;
   dy: number;
-  /** No line comes within a pixel of the name's box; false when one still crosses the edge of the box. */
-  clear: boolean;
+  /** The <text> elements moved (their order in the document): its lines, language versions and copies. */
+  texts: number[];
 };
 
 export type FixResult = {
@@ -31,8 +31,11 @@ export type FixResult = {
   /** The check of the original map. */
   before: SvgCheck;
   moves: FixMove[];
-  /** Names with a line through them that had no free place within reach, and stay. */
-  stuck: { index: number; name: string }[];
+  /**
+   * Names with a line through them that stay: no free place within reach ("full"), a single letter, which is
+   * mostly one of the spaced-out letters of an area's name ("letter"), or a name that cannot be measured ("size").
+   */
+  stuck: { index: number; name: string; why: "full" | "letter" | "size" }[];
   /** Root units per pixel at the size MediaWiki gives the map. */
   unitsPerPx: number;
 };
@@ -78,13 +81,17 @@ export function fixSvgLabels(svg: string, opts: FixOptions = {}): FixResult {
   for (const lb of todo) {
     const own = boxes[lb.index]!;
     const mine = new Set([lb.index, ...(copies.get(lb.index) ?? [])]);
+    if ([...lb.name.replace(/\s/g, "")].length < 2) {
+      stuck.push({ index: lb.index, name: lb.name, why: "letter" });
+      continue;
+    }
     const h = Math.max(...own.map((b) => 2 * b.hh));
     // A name with no height (letters the font tables do not cover, as Arabic) cannot be placed.
     if (!(h > 0)) {
-      stuck.push({ index: lb.index, name: lb.name });
+      stuck.push({ index: lb.index, name: lb.name, why: "size" });
       continue;
     }
-    const reach = (opts.reach ?? 3) * h;
+    const reach = (opts.reach ?? 2) * h;
     const rad = (b: OBox) => Math.hypot(b.hw, b.hh);
     const [ox, oy] = [own.reduce((s, b) => s + b.cx, 0) / own.length, own.reduce((s, b) => s + b.cy, 0) / own.length];
     const span = Math.max(...own.map((b) => Math.hypot(b.cx - ox, b.cy - oy) + rad(b))) + reach + h;
@@ -104,51 +111,45 @@ export function fixSvgLabels(svg: string, opts: FixOptions = {}): FixResult {
     const near = symbols.map((s) => ({ s, d: dist(own, s) })).filter((e) => e.d <= h).sort((p, q) => p.d - q.d)[0];
     const keep = near ? Math.max(near.d, h) : 0;
 
-    // Cheap tests first; once a place with a line along the edge is in hand, only a clear one is worth testing.
-    const tierOf = (dx: number, dy: number, onlyClear: boolean): 1 | 2 | 3 => {
+    // Free: no line within a pixel of the box, cheap tests first.
+    const free = (dx: number, dy: number): boolean => {
       const moved = own.map((b) => ({ ...b, cx: b.cx + dx, cy: b.cy + dy }));
       for (const b of moved) {
         const c = Math.cos(b.ang);
         const s = Math.sin(b.ang);
         const ex = Math.abs(b.hw * c) + Math.abs(b.hh * s);
         const ey = Math.abs(b.hw * s) + Math.abs(b.hh * c);
-        if (b.cx - ex < X0 || b.cx + ex > X0 + W || b.cy - ey < Y0 || b.cy + ey > Y0 + H) return 3;
+        if (b.cx - ex < X0 || b.cx + ex > X0 + W || b.cy - ey < Y0 || b.cy + ey > Y0 + H) return false;
       }
       if (near) {
         const d = dist(moved, near.s);
-        if (d > keep || symbols.some((p) => p !== near.s && dist(moved, p) < d)) return 3;
+        if (d > keep || symbols.some((p) => p !== near.s && dist(moved, p) < d)) return false;
       }
       for (const b of moved) {
         const big = { ...b, hw: b.hw + gap, hh: b.hh + gap };
-        if (others.some((o) => overlap(big, o)) || symbols.some((p) => gapTo(big, p.x, p.y) < p.r)) return 3;
+        if (others.some((o) => overlap(big, o)) || symbols.some((p) => gapTo(big, p.x, p.y) < p.r)) return false;
       }
-      if (paint.topAt(...centre(dx, dy)) !== area) return 3;
-      const edge = moved.some((b) => lines.hits({ ...b, hw: b.hw + margin, hh: b.hh + margin }, 1, 1, shows));
-      if (!edge) return 1;
-      if (onlyClear || moved.some((b) => lines.hits(b, 0.9, 0.5, shows))) return 3;
-      return 2;
+      if (paint.topAt(...centre(dx, dy)) !== area) return false;
+      return !moved.some((b) => lines.hits({ ...b, hw: b.hw + margin, hh: b.hh + margin }, 1, 1, shows));
     };
 
     // Rings around the name, nearest first, a quarter of its height apart; flatter than round, as text is wide.
     const step = h / 4;
     let best: [number, number] | null = null;
-    let bestTier = 3;
-    for (let r = step; r <= reach + 1e-9 && bestTier > 1; r += step) {
+    search: for (let r = step; r <= reach + 1e-9; r += step) {
       const n = Math.max(8, Math.ceil((2 * Math.PI * r) / step));
       for (let t = 0; t < n; t++) {
         const th = (2 * Math.PI * t) / n;
         const dx = r * Math.cos(th);
         const dy = r * Math.sin(th) * 0.75;
-        const tier = tierOf(dx, dy, bestTier === 2);
-        if (tier < bestTier) {
+        if (free(dx, dy)) {
           best = [dx, dy];
-          bestTier = tier;
-          if (tier === 1) break;
+          break search;
         }
       }
     }
     if (best === null) {
-      stuck.push({ index: lb.index, name: lb.name });
+      stuck.push({ index: lb.index, name: lb.name, why: "full" });
       continue;
     }
     const [dx, dy] = best;
@@ -158,7 +159,8 @@ export function fixSvgLabels(svg: string, opts: FixOptions = {}): FixResult {
         b.cy += dy;
       }
     }
-    moves.push({ index: lb.index, name: lb.name, dx, dy, clear: bestTier === 1 });
+    const texts = [...mine].flatMap((i) => groups[i]!.texts.map((t) => t.index)).sort((p, q) => p - q);
+    moves.push({ index: lb.index, name: lb.name, dx, dy, texts });
   }
 
   const byText = new Map<SvgText, readonly [number, number]>();
