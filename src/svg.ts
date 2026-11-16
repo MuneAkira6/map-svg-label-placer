@@ -64,7 +64,23 @@ const SVG_NS = /^(?:http:\/\/www\.w3\.org\/2000\/svg|&ns_svg;)$/;
 const INHERIT = [
   "stroke", "stroke-width", "fill", "font-size", "text-anchor", "visibility",
   "font-family", "font-weight", "font-style", "letter-spacing", "writing-mode", "xml:space",
+  "fill-opacity", "stroke-opacity",
 ] as const;
+
+/** An opacity value ("0.5", "50%"); 1 when absent or unreadable. */
+export function alpha(v: string | undefined): number {
+  const n = num(v);
+  if (n === undefined) return 1;
+  return v!.trim().endsWith("%") ? n / 100 : n;
+}
+
+const NO_PAINT = new Set(["none", "transparent", ""]);
+/** Does an element with these inherited properties paint its fill / its stroke? */
+export function paints(inh: ReadonlyMap<string, string>, what: "fill" | "stroke"): boolean {
+  const paint = (inh.get(what) ?? (what === "fill" ? "black" : "none")).trim();
+  if (NO_PAINT.has(paint) || alpha(inh.get(`${what}-opacity`)) <= 0) return false;
+  return what === "fill" || num(inh.get("stroke-width"), 1.0) > 0;
+}
 
 /** Python str.strip() whitespace. */
 const PY_WS = "\\t\\n\\v\\f\\r\\x1c-\\x1f \\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000";
@@ -236,7 +252,8 @@ export function* walkSvg(svg: string): Generator<SvgElement> {
     const inh = inherit(parent.inh, a);
     const fontSize = fontSizePx(a.get("font-size"), parent.fontSize);
     const vis = inh.get("visibility");
-    const hidden = parent.hidden || a.get("display") === "none" || vis === "hidden" || vis === "collapse";
+    const hidden =
+      parent.hidden || a.get("display") === "none" || vis === "hidden" || vis === "collapse" || alpha(a.get("opacity")) <= 0;
     const colon = tag.indexOf(":");
     const known = LIBRSVG_ELEMENTS.has(local) && (colon < 0 || svgPrefixes.has(tag.slice(0, colon)));
     const nonrender = parent.nonrender || NON_RENDER.has(local) || !known;
@@ -281,9 +298,9 @@ export function parseSvg(svg: string, opts: SvgReadOptions): Obstacles {
     const { local, attrs: a, m, inh, hidden, nonrender } = el;
     const active = !hidden && !nonrender;
     const stroke = inh.get("stroke") ?? "none";
-    const stroked = !["none", "transparent", ""].includes(stroke);
+    const stroked = !NO_PAINT.has(stroke) && alpha(inh.get("stroke-opacity")) > 0;
     const sw = num(inh.get("stroke-width"), 1.0) * matScale(m);
-    const filled = !["none", "transparent", ""].includes(inh.get("fill") ?? "black");
+    const filled = !NO_PAINT.has(inh.get("fill") ?? "black") && alpha(inh.get("fill-opacity")) > 0;
     const id = a.get("id");
 
     let sub: Ring[] | null = null;
@@ -356,7 +373,7 @@ export function parseSvg(svg: string, opts: SvgReadOptions): Obstacles {
     }
     if (local === "text") {
       const content = el.content;
-      if (!active || !content || opts.skipTextAt?.has(el.start)) continue;
+      if (!active || !content || opts.skipTextAt?.has(el.start) || !(paints(inh, "fill") || paints(inh, "stroke"))) continue;
       const fs = el.fontSize;
       const tx = num(a.get("x"), 0.0);
       const ty = num(a.get("y"), 0.0);

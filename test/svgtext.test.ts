@@ -60,6 +60,17 @@ describe("what librsvg does not draw", () => {
       ["Prefixed", false],
     ]);
   });
+  it("hides what is fully transparent", () => {
+    const o = readTexts(`<svg xmlns="http://www.w3.org/2000/svg">
+      <g style="fill-opacity:0;stroke-opacity:0"><text>Searchable copy</text></g><g opacity="0%"><text>Gone</text></g>
+      <text fill="none" stroke="#fff" stroke-width="2">Outline</text><text fill="none">Nothing</text><text fill-opacity="0.5">Half</text></svg>`);
+    expect(o.map((x) => [x.content, x.hidden])).toEqual([
+      ["Searchable copy", true], ["Gone", true], ["Outline", false], ["Nothing", true], ["Half", false],
+    ]);
+    const lines = parseSvg(`<svg xmlns="http://www.w3.org/2000/svg"><path d="M0,0 H9" stroke="#000" stroke-opacity="0"/>
+      <g opacity="0"><path d="M0,5 H9" stroke="#000"/></g><path d="M0,9 H9" stroke="#000"/></svg>`, { areaIds: [], rectMax: 50, textCharEm: 0.6, textDescent: 2 });
+    expect(lines.segs.map((g) => g.y1)).toEqual([9]);
+  });
   it("takes no obstacles from a <flowRoot>, and says it is not shown", () => {
     const o = parseSvg(doc.replace("<rect ", '<rect stroke="black" '), { areaIds: [], rectMax: 1000, textCharEm: 0.6, textDescent: 2 });
     expect(o.segs).toEqual([]);

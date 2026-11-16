@@ -6,7 +6,7 @@
 
 import { fontSizePx, lengthPx, readStyleSheet, type StyleSheet } from "./css.js";
 import type { Mat } from "./geometry.js";
-import { TAG_RE, elementAttrs, inherit, num, unescapeEntities, walkSvg, type SvgElement } from "./svg.js";
+import { TAG_RE, elementAttrs, inherit, num, paints, unescapeEntities, walkSvg, type SvgElement } from "./svg.js";
 
 /** A span of the source holding the value of an x or y attribute. */
 export type CoordSpan = { axis: "x" | "y"; start: number; end: number; values: number[] };
@@ -54,7 +54,7 @@ export type SvgText = {
   vertical: boolean;
   /** The characters that are drawn, after xml:space handling, with their positions and fonts. */
   chars: TextChar[];
-  /** Not drawn: hidden, or inside <defs> and the like. */
+  /** Not drawn: hidden, transparent, or inside <defs> and the like. */
   hidden: boolean;
   /** Ids of the ancestors, outermost first (e.g. a "legend" group). */
   ancestors: string[];
@@ -251,7 +251,8 @@ export function readTexts(svg: string): SvgText[] {
       anchor: anchorOf(el.inh.get("text-anchor")),
       vertical: VERTICAL.has((el.inh.get("writing-mode") ?? "").trim()),
       chars: readChars(svg, el, sheet),
-      hidden: el.hidden || el.nonrender,
+      // Fill and stroke both transparent: kept so that text converted to paths stays searchable (Help:SVG).
+      hidden: el.hidden || el.nonrender || !(paints(el.inh, "fill") || paints(el.inh, "stroke")),
       ancestors: el.ancestors,
       switchAt: el.switchAt,
       altAt: el.alt?.at ?? null,
