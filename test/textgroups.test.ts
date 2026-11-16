@@ -55,6 +55,17 @@ describe("names of several lines and words of single letters", () => {
     const r = units(`${word}<text x="600" y="500" ${LS}>A</text>`);
     expect(r.units.map((u) => u.reason ?? null)).toEqual([...Array(5).fill("one letter of a word set letter by letter"), null]);
   });
+  it("does not take numbered places for the letters of a word", () => {
+    // Prefecture numbers on a map of Japan: short, close, but each one behind or below the one before.
+    const r = units(`<text x="200" y="100" ${LS}>8</text><text x="170" y="80" ${LS}>9</text>
+      <text x="130" y="95" ${LS}>10</text><text x="155" y="120" ${LS}>11</text>`);
+    expect(r.units.map((u) => u.reason ?? null)).toEqual([null, null, null, null]);
+  });
+  it("lists the drawn texts of each label", () => {
+    const r = units(`<switch><text systemLanguage="de" x="10" y="50" ${LS}>Nord</text><text x="10" y="50" ${LS}>North</text></switch>
+      <switch><text systemLanguage="de" x="10" y="74" ${LS}>see</text><text x="10" y="74" ${LS}>sea</text></switch>`);
+    expect(r.units.map((u) => u.drawn.map((t) => t.content))).toEqual([["North", "sea"]]);
+  });
 });
 
 describe("placeSvgTexts with grouped texts", () => {

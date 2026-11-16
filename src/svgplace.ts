@@ -31,6 +31,8 @@ export type SvgTextConfig = {
 export type TextGroup = {
   /** The texts that move together: one, its language versions in a <switch>, the lines of one name. */
   texts: SvgText[];
+  /** Those drawn in the render language. */
+  drawn: SvgText[];
   fixed: boolean;
   /** Why a text cannot move, when fixed for a reason other than the config. */
   reason?: string;
@@ -106,7 +108,7 @@ export function readSvgLabels(svg: string, tc: SvgTextConfig = {}): SvgLabels {
   warnings.push(...grouped.warnings);
 
   const seen = new Map<string, number>();
-  const groups: TextGroup[] = grouped.units.map(({ texts: ts, box, reason }) => {
+  const groups: TextGroup[] = grouped.units.map(({ texts: ts, drawn, box, reason }) => {
     const rep = ts[0]!;
     const [l, t, r, b] = box;
     const sc = matScale(rep.m);
@@ -130,7 +132,7 @@ export function readSvgLabels(svg: string, tc: SvgTextConfig = {}): SvgLabels {
       else if (angle) warnings.push(`"${rep.content}" is rotated, so it is placed as an area name, not next to its point`);
       else label.point = c;
     }
-    return { texts: ts, fixed, reason, label, hw: ((r - l) / 2) * sc, hh: ((b - t) / 2) * sc };
+    return { texts: ts, drawn, fixed, reason, label, hw: ((r - l) / 2) * sc, hh: ((b - t) / 2) * sc };
   });
   return { frame, texts: all, groups, warnings };
 }

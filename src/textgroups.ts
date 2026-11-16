@@ -10,6 +10,8 @@ import type { Box } from "./textlayout.js";
 export type TextUnit = {
   /** The texts that move together. The first is the one drawn in the render language. */
   texts: SvgText[];
+  /** Those of them that are drawn in the render language (one per line of the name). */
+  drawn: SvgText[];
   /** Union of their boxes, in the coordinates of texts[0]. */
   box: Box;
   /** Set when the unit cannot move. */
@@ -68,7 +70,7 @@ function startPoint(t: SvgText): [number, number] {
 }
 
 /** Language versions: one list per label, the drawn version first. Versions that cannot be matched are dropped. */
-function byLanguage(texts: SvgText[], lang: string, warnings: string[]): SvgText[][] {
+function byLanguage(texts: SvgText[], lang: string, warnings: string[], shown: Set<SvgText>): SvgText[][] {
   const out: SvgText[][] = [];
   const switches = new Map<number, SvgText[]>();
   for (const t of texts) {
@@ -88,6 +90,7 @@ function byLanguage(texts: SvgText[], lang: string, warnings: string[]): SvgText
   for (const g of out) {
     const sw = g[0]!.switchAt;
     if (sw === null || switches.get(sw) !== g) {
+      shown.add(g[0]!);
       result.push(g);
       continue;
     }
@@ -103,12 +106,14 @@ function byLanguage(texts: SvgText[], lang: string, warnings: string[]): SvgText
     if (direct) {
       // <switch><text systemLanguage="de">…</text><text>…</text></switch>: one label.
       const drawn = alts.get(drawnAt)![0]!;
+      shown.add(drawn);
       result.push([drawn, ...g.filter((t) => t !== drawn)]);
       continue;
     }
     // <switch><g systemLanguage="de">many texts</g><g>many texts</g></switch>: match the versions across the
     // layers by id without the language suffix, else by where they start, else by order when the layers are alike.
     const drawn = alts.get(drawnAt)!;
+    for (const t of drawn) shown.add(t);
     const units = drawn.map((t) => [t]);
     const byStem = new Map<string, number>();
     drawn.forEach((t, i) => {
@@ -148,11 +153,12 @@ function byLanguage(texts: SvgText[], lang: string, warnings: string[]): SvgText
  */
 export function groupTexts(texts: SvgText[], boxOf: ReadonlyMap<SvgText, Box>, lang = "en"): GroupResult {
   const warnings: string[] = [];
-  const units: TextUnit[] = byLanguage(texts, lang, warnings).map((ts) => {
+  const shown = new Set<SvgText>();
+  const units: TextUnit[] = byLanguage(texts, lang, warnings, shown).map((ts) => {
     const rep = ts[0]!;
     let box = boxOf.get(rep)!;
     for (const o of ts.slice(1)) box = union(box, boxIn(rep, o, boxOf.get(o)!));
-    const unit: TextUnit = { texts: ts, box };
+    const unit: TextUnit = { texts: ts, drawn: ts.filter((t) => shown.has(t)), box };
     if (ts.some((o) => o.onPath)) unit.reason = "laid out along a textPath";
     else if (ts.some((o) => o.vertical)) unit.reason = "vertical text";
     return unit;
@@ -167,7 +173,8 @@ export function groupTexts(texts: SvgText[], boxOf: ReadonlyMap<SvgText, Box>, l
   });
   const sameAngle = (i: number, j: number) => Math.abs(Math.sin(geo[i]!.angle - geo[j]!.angle)) < 0.02 && Math.cos(geo[i]!.angle - geo[j]!.angle) > 0;
 
-  // Letters of one word: two or more neighbouring texts of one or two letters, close together, same size.
+  // Letters of one word: two or more neighbouring texts of one or two letters, same size, each one a little
+  // further along the baseline of the one before (not behind it, not on the next line: map numbers are not words).
   const inWord = new Array<boolean>(units.length).fill(false);
   for (let i = 0; i + 1 < units.length; i++) {
     const a = geo[i]!;
@@ -175,7 +182,11 @@ export function groupTexts(texts: SvgText[], boxOf: ReadonlyMap<SvgText, Box>, l
     if (a.n < 1 || a.n > 2 || b.n < 1 || b.n > 2 || units[i]!.reason || units[i + 1]!.reason) continue;
     const fs = Math.max(a.fs, b.fs);
     if (Math.min(a.fs, b.fs) / fs < 0.9) continue;
-    if (Math.hypot(a.centre[0] - b.centre[0], a.centre[1] - b.centre[1]) <= 2.5 * fs) inWord[i] = inWord[i + 1] = true;
+    const dx = b.centre[0] - a.centre[0];
+    const dy = b.centre[1] - a.centre[1];
+    const along = dx * Math.cos(a.angle) + dy * Math.sin(a.angle);
+    const across = Math.abs(-dx * Math.sin(a.angle) + dy * Math.cos(a.angle));
+    if (along > 0 && along <= 2.5 * fs && across <= 0.6 * fs) inWord[i] = inWord[i + 1] = true;
   }
   units.forEach((u, i) => {
     if (inWord[i]) u.reason = "one letter of a word set letter by letter";
@@ -207,12 +218,13 @@ export function groupTexts(texts: SvgText[], boxOf: ReadonlyMap<SvgText, Box>, l
         aligned
       ) {
         last.texts.push(...u.texts);
+        last.drawn.push(...u.drawn);
         last.box = union(A, B);
         prev = i;
         return;
       }
     }
-    merged.push({ ...u, texts: [...u.texts] });
+    merged.push({ ...u, texts: [...u.texts], drawn: [...u.drawn] });
     prev = i;
   });
   return { units: merged, warnings };
