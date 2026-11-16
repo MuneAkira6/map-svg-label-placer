@@ -1,5 +1,5 @@
 // SVG path data -> polylines. Curves become 8-segment polylines; arcs become a straight line to the end point
-// (with a warning), as in the Python version.
+// (with a warning), as in the Python version, unless `arcs` asks for them to be followed.
 //
 // Bad path data is read up to the last complete segment, which is what the SVG spec asks of renderers and what
 // librsvg draws. The Python version raises instead.
@@ -15,8 +15,51 @@ type Tok = { cmd: string; num: number };
 /** A segment is cut short or a character is not path data: stop reading, keep what was read. */
 class BadPath extends Error {}
 
+/**
+ * Points along an elliptical arc from (x1, y1) to (x2, y2), the start left out (SVG 1.1 appendix F.6.5 and F.6.6:
+ * centre parameterisation, radii scaled up when too small). Steps of at most 1/32 of a turn.
+ */
+export function arcPoints(x1: number, y1: number, rx: number, ry: number, phiDeg: number, large: boolean, sweep: boolean, x2: number, y2: number): Pt[] {
+  if (x1 === x2 && y1 === y2) return [];
+  rx = Math.abs(rx);
+  ry = Math.abs(ry);
+  if (rx === 0 || ry === 0) return [[x2, y2]];
+  const phi = (phiDeg * Math.PI) / 180;
+  const cos = Math.cos(phi);
+  const sin = Math.sin(phi);
+  const dx = (x1 - x2) / 2;
+  const dy = (y1 - y2) / 2;
+  const xp = cos * dx + sin * dy;
+  const yp = -sin * dx + cos * dy;
+  const lambda = (xp * xp) / (rx * rx) + (yp * yp) / (ry * ry);
+  if (lambda > 1) {
+    rx *= Math.sqrt(lambda);
+    ry *= Math.sqrt(lambda);
+  }
+  const num = rx * rx * ry * ry - rx * rx * yp * yp - ry * ry * xp * xp;
+  const den = rx * rx * yp * yp + ry * ry * xp * xp;
+  const coef = (large !== sweep ? 1 : -1) * Math.sqrt(Math.max(0, num / den));
+  const cxp = (coef * rx * yp) / ry;
+  const cyp = (-coef * ry * xp) / rx;
+  const cx = cos * cxp - sin * cyp + (x1 + x2) / 2;
+  const cy = sin * cxp + cos * cyp + (y1 + y2) / 2;
+  const angle = (ux: number, uy: number, vx: number, vy: number) => Math.atan2(ux * vy - uy * vx, ux * vx + uy * vy);
+  const t1 = angle(1, 0, (xp - cxp) / rx, (yp - cyp) / ry);
+  let dt = angle((xp - cxp) / rx, (yp - cyp) / ry, (-xp - cxp) / rx, (-yp - cyp) / ry);
+  if (!sweep && dt > 0) dt -= 2 * Math.PI;
+  else if (sweep && dt < 0) dt += 2 * Math.PI;
+  const steps = Math.max(2, Math.ceil(Math.abs(dt) / (Math.PI / 16)));
+  const out: Pt[] = [];
+  for (let k = 1; k < steps; k++) {
+    const t = t1 + (dt * k) / steps;
+    out.push([cos * rx * Math.cos(t) - sin * ry * Math.sin(t) + cx, sin * rx * Math.cos(t) + cos * ry * Math.sin(t) + cy]);
+  }
+  out.push([x2, y2]);
+  return out;
+}
+
 /** d -> subpaths in user units (not transformed). */
-export function pathSubpaths(d: string | undefined, warn: (msg: string) => void): Ring[] {
+export function pathSubpaths(d: string | undefined, warn: (msg: string) => void, opts: { arcs?: boolean } = {}): Ring[] {
   const src = d ?? "";
   const toks: Tok[] = [];
   PATH_TOK.lastIndex = 0;
@@ -150,11 +193,16 @@ export function pathSubpaths(d: string | undefined, warn: (msg: string) => void)
         ctrlKind = "Q";
       } else if (C === "A") {
         const v = take(7);
-        cx = v[5]! + ox;
-        cy = v[6]! + oy;
-        pts.push([cx, cy]);
+        const x = v[5]! + ox;
+        const y = v[6]! + oy;
+        if (opts.arcs) pts.push(...arcPoints(cx, cy, v[0]!, v[1]!, v[2]!, v[3] !== 0, v[4] !== 0, x, y));
+        else {
+          pts.push([x, y]);
+          warn("path has an arc (A); approximated by a straight line");
+        }
+        cx = x;
+        cy = y;
         ctrlKind = null;
-        warn("path has an arc (A); approximated by a straight line");
       }
     }
   } catch (e) {

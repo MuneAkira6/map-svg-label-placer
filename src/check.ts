@@ -207,7 +207,7 @@ function fillRings(el: SvgElement): Pt[][] | null {
   const a = el.attrs;
   const n = (k: string) => svgNum(a.get(k), 0);
   let rings: Pt[][];
-  if (el.local === "path") rings = pathSubpaths(a.get("d") ?? "", () => {}).map((r) => r.pts);
+  if (el.local === "path") rings = pathSubpaths(a.get("d") ?? "", () => {}, { arcs: true }).map((r) => r.pts);
   else if (el.local === "polygon" || el.local === "polyline") {
     const v = numbersIn(a.get("points") ?? "");
     const pts: Pt[] = [];
@@ -346,7 +346,7 @@ export function checkSvgLabels(svg: string, opts: CheckOptions = {}): SvgCheck {
   const lang = opts.lang ?? "en";
   const L = readSvgLabels(svg, { lang });
   const [X0, Y0, W, H] = L.frame;
-  const obst = parseSvg(svg, { areaIds: [], rectMax: 0, textCharEm: 0.6, textDescent: 2, skipTextAt: new Set(L.texts.map((t) => t.start)) });
+  const obst = parseSvg(svg, { areaIds: [], rectMax: 0, textCharEm: 0.6, textDescent: 2, skipTextAt: new Set(L.texts.map((t) => t.start)), arcs: true });
   const warnings = [...L.warnings, ...obst.warnings];
 
   // Halo: the text, or one of its tspans, has a stroke of another colour than its fill.

@@ -29,6 +29,8 @@ export type Obstacles = {
 };
 
 export type SvgReadOptions = {
+  /** Follow elliptical arcs (A) instead of taking the straight line to their end, as the Python version does. */
+  arcs?: boolean;
   /** Ids of filled areas that labels may cover (built-up areas, lakes). */
   areaIds: readonly string[];
   /** Rects smaller than this in both directions are solid obstacles; larger ones count only by their outline. */
@@ -314,7 +316,7 @@ export function parseSvg(svg: string, opts: SvgReadOptions): Obstacles {
 
     let sub: Ring[] | null = null;
     if (local === "path") {
-      sub = pathSubpaths(a.get("d") ?? "", warn);
+      sub = pathSubpaths(a.get("d") ?? "", warn, { arcs: opts.arcs });
     } else if (local === "line") {
       const p1: Pt = [num(a.get("x1"), 0.0), num(a.get("y1"), 0.0)];
       const p2: Pt = [num(a.get("x2"), 0.0), num(a.get("y2"), 0.0)];

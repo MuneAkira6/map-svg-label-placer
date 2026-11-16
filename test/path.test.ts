@@ -26,3 +26,27 @@ describe("pathSubpaths on bad data", () => {
     expect(read("M0,0 10,0, 10,10z m 5 5 h 1").warnings).toEqual([]);
   });
 });
+
+describe("pathSubpaths with arcs followed", () => {
+  const near = (p: readonly number[], q: readonly number[]) => Math.hypot(p[0]! - q[0]!, p[1]! - q[1]!) < 1e-9;
+
+  it("keeps the straight line to the end point by default, as the Python version", () => {
+    expect(pathSubpaths("M0,0 A50,50 0 0 1 100,0", () => {})[0]!.pts).toEqual([[0, 0], [100, 0]]);
+  });
+
+  it("follows a half circle, on the side the sweep flag gives", () => {
+    const up = pathSubpaths("M0,0 A50,50 0 0 1 100,0", () => {}, { arcs: true })[0]!.pts;
+    const down = pathSubpaths("M0,0 a50,50 0 0 0 100,0", () => {}, { arcs: true })[0]!.pts;
+    expect(up.every(([x, y]) => Math.abs(Math.hypot(x - 50, y) - 50) < 1e-9)).toBe(true);
+    expect(up.some(([, y]) => y < -49)).toBe(true); // y points down, so sweep 1 goes over the top
+    expect(down.some(([, y]) => y > 49)).toBe(true);
+    expect(near(up[up.length - 1]!, [100, 0])).toBe(true);
+  });
+
+  it("scales radii that are too small, and takes the large arc when asked", () => {
+    const small = pathSubpaths("M0,0 A10,10 0 0 1 100,0", () => {}, { arcs: true })[0]!.pts;
+    expect(small.every(([x, y]) => Math.abs(Math.hypot(x - 50, y) - 50) < 1e-9)).toBe(true);
+    const large = pathSubpaths("M0,0 A100,100 0 1 1 100,0", () => {}, { arcs: true })[0]!.pts;
+    expect(Math.min(...large.map(([, y]) => y))).toBeLessThan(-100);
+  });
+});
