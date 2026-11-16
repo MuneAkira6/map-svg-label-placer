@@ -7,6 +7,8 @@ export type { AnchorRule, Config, Label, LabelDoc, PlaceConfig, Style, WithinRul
 export { buildOutput, wikitextFiles, PAGE_HEAD, PAGE_TAIL } from "./wikitext.js";
 export type { MockOptions, OutputResult, WikitextConfig, WikitextOutput } from "./wikitext.js";
 export { placeSvgTexts, readSvgLabels } from "./svgplace.js";
+export { checkSvgLabels } from "./check.js";
+export type { CheckedBox, CheckOptions, LabelCheck, LineHit, Quad, SvgCheck, Unshown } from "./check.js";
 export type { SvgLabels, SvgPlaceResult, SvgTextConfig, TextGroup } from "./svgplace.js";
 export { layoutText } from "./textlayout.js";
 export type { Box, TextLayout } from "./textlayout.js";

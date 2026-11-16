@@ -100,6 +100,9 @@ function read(lib, svg) {
   for (const g of labels.groups) if (g.reason) fixed[g.reason] = (fixed[g.reason] ?? 0) + 1;
   const r1 = (v) => Math.round(v * 10) / 10;
   const boxes = labels.groups.map((g) => [g.label.name, r1(g.label.x), r1(g.label.y), r1(g.hw), r1(g.hh), r1(g.label.angle ?? 0)]);
+  const c = lib.checkSvgLabels(svg);
+  const judged = c.labels.filter((l) => !l.skipped);
+  const count = (f) => judged.filter(f).length;
   return {
     texts: labels.texts.filter((t) => !t.hidden && t.content).length,
     labels: labels.groups.length,
@@ -109,6 +112,16 @@ function read(lib, svg) {
     circles: obst.circles.length,
     warnings: labels.warnings.length + obst.warnings.length,
     boxes: createHash("sha1").update(JSON.stringify(boxes)).digest("hex").slice(0, 12),
+    // What the checker reports: labels with a line through the letters / only across the box (halo and plate
+    // excluded), labels covering others, running off the edge, and text Commons does not draw.
+    check: {
+      core: count((l) => l.line === "core" && !l.masked),
+      edge: count((l) => l.line === "edge" && !l.masked),
+      masked: count((l) => l.line && l.masked),
+      overlap: count((l) => l.overlaps.length > 0),
+      clipped: count((l) => l.clipped),
+      unshown: c.unshown.length,
+    },
   };
 }
 

@@ -47,6 +47,17 @@ import { placeLabels } from "map-svg-label-placer";
 const { doc, failed } = placeLabels(svgText, labelFile, config);
 ```
 
+`checkSvgLabels` only reports, as Commons draws the map: names with a line through their letters (`core`) or only
+across their box (`edge`), names with a halo or on a solid plate, names covering each other or running off the
+edge, and text Commons does not show (`<flowRoot>`, `<textPath>`). Positions are in the SVG's own coordinates.
+
+```ts
+import { checkSvgLabels } from "map-svg-label-placer";
+
+const { labels, unshown } = checkSvgLabels(svgText);
+const crossed = labels.filter((l) => l.line === "core" && !l.masked && !l.skipped);
+```
+
 The config and label files use the format of the Python scripts, which is documented (in Chinese) at the top of
 [`reference/python/map_place_labels.py`](reference/python/map_place_labels.py) and
 [`map_labels.py`](reference/python/map_labels.py).
@@ -105,6 +116,12 @@ test maps had not:
 | `<flowRoot>` text, which librsvg does not draw, not reported | 9 | 28 |
 | Shapes and texts with zero opacity, which are not drawn, read as lines and labels | 21 | 3 |
 
+Over the same maps the check finds a line through the letters of at least one name in 194 of the 253 maps that
+have text (3,764 names), not counting names with a halo or on a plate. Of 40 of those names picked at random,
+one per map, 30 do have a visible line through them, 6 do not, and 4 could not be told at that size. The six:
+a bold name measured wider than it is drawn, two lines too faint to see, a symbol's own stem, a line along the
+bottom of the box. Lines thinner than 0.3 px on a 1280 px wide map are not counted.
+
 ## Matching the Python version
 
 The tests run both versions on seven maps (two made up, five drawn for Wikipedia) and compare every chosen
@@ -133,6 +150,8 @@ differs:
   close together, say) move together.
 - Arcs are treated as straight lines, and arc flags written without spaces (`a5 5 0 015 5`) are misread.
 - `<use>` and `<image>` are ignored.
+- The check does not know what is drawn on top of what: a line hidden under a filled area drawn after it, or
+  drawn in the colour of the area around it, still counts.
 - `sin`, `cos` and `atan2` come from the JavaScript engine and may differ in the last bit between engines.
 
 ## Licence
