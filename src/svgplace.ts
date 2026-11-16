@@ -76,12 +76,23 @@ function symbolCentre(svg: string, id: string): [number, number] | null {
 const inAny = (t: SvgText, ids: readonly string[] | undefined) =>
   ids !== undefined && ((t.id !== undefined && ids.includes(t.id)) || t.ancestors.some((a) => ids.includes(a)));
 
-export function placeSvgTexts(svg: string, cfg: Config & { svg_text?: SvgTextConfig } = {}): SvgPlaceResult {
-  const tc = cfg.svg_text ?? {};
-  const [X0, Y0, W, H] = rootFrame(svg);
+export type SvgLabels = {
+  /** The map frame: min-x, min-y, width and height of the viewBox. */
+  frame: [number, number, number, number];
+  /** Every <text> of the document, drawn or not. */
+  texts: SvgText[];
+  /** The labels: texts grouped, sized and positioned in root coordinates. */
+  groups: TextGroup[];
+  warnings: string[];
+};
+
+/** Read the texts of an SVG map as labels: laid out, measured with Commons' fonts, grouped. */
+export function readSvgLabels(svg: string, tc: SvgTextConfig = {}): SvgLabels {
+  const frame = rootFrame(svg);
   const warnings: string[] = [];
   const boxOf = new Map<SvgText, Box>();
-  const texts = readTexts(svg).filter((t) => {
+  const all = readTexts(svg);
+  const texts = all.filter((t) => {
     if (t.hidden || !t.content) return false;
     const { box } = layoutText(t);
     if (box) boxOf.set(t, box);
@@ -118,6 +129,13 @@ export function placeSvgTexts(svg: string, cfg: Config & { svg_text?: SvgTextCon
     }
     return { texts: ts, fixed, reason, label, hw: ((r - l) / 2) * sc, hh: ((b - t) / 2) * sc };
   });
+  return { frame, texts: all, groups, warnings };
+}
+
+export function placeSvgTexts(svg: string, cfg: Config & { svg_text?: SvgTextConfig } = {}): SvgPlaceResult {
+  const tc = cfg.svg_text ?? {};
+  const { frame, texts, groups, warnings } = readSvgLabels(svg, tc);
+  const [X0, Y0, W, H] = frame;
 
   const place = cfg.place ?? {};
   if (place.lines && Object.keys(place.lines).length > 0) {
