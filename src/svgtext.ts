@@ -204,7 +204,7 @@ function readChars(svg: string, el: SvgElement, sheet: StyleSheet): TextChar[] {
 }
 
 const ATTR_IDX_RE = /([^\s=>/]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/dgu;
-const TSPAN_RE = /<tspan\b[^>]*>/gu;
+const TSPAN_RE = /<(?:[\w.-]+:)?tspan\b[^>]*>/gu;
 const LIST_NUM_RE = /[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?/g;
 
 function coordSpans(svg: string, from: number, to: number): CoordSpan[] {

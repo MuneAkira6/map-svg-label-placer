@@ -33,6 +33,13 @@ describe("readTexts", () => {
   it("finds the x and y values of the text and its tspans", () => {
     expect(t[2]!.coords.map((c) => [c.axis, c.values])).toEqual([["y", [30]], ["x", [100, 110]], ["y", [30]], ["x", [100]]]);
   });
+
+  it("finds the x and y of tspans with a namespace prefix, as Inkscape writes them", () => {
+    const doc = `<svg:svg xmlns:svg="http://www.w3.org/2000/svg"><svg:text x="5" y="9"><svg:tspan x="5" y="9">Bitola</svg:tspan></svg:text></svg:svg>`;
+    const [only] = readTexts(doc);
+    expect(only!.coords.map((c) => [c.axis, c.values])).toEqual([["x", [5]], ["y", [9]], ["x", [5]], ["y", [9]]]);
+    expect(moveTexts(doc, new Map([[only!, [10, 2] as const]]))).toContain(`<svg:tspan x="15" y="11">`);
+  });
 });
 
 describe("what librsvg does not draw", () => {
