@@ -72,6 +72,25 @@ function inside(b: OBox, x: number, y: number): boolean {
   return Math.abs(u) <= b.hw && Math.abs(v) <= b.hh;
 }
 
+/**
+ * The name on one line: a text placed again lower down (a tspan with its own y, or with x and dy) starts a new
+ * line of the name, and the lines are joined with a space. Letters placed one by one along a line stay together.
+ */
+function nameOf(texts: readonly SvgText[]): string {
+  const lines = texts.map((t) => {
+    let s = "";
+    let y: number | undefined;
+    t.chars.forEach((c, i) => {
+      const newLine = i > 0 && ((c.y !== undefined && c.y !== y) || (c.x !== undefined && c.dy !== 0));
+      if (newLine && !/\s$/.test(s)) s += " ";
+      if (c.y !== undefined) y = c.y;
+      s += c.ch;
+    });
+    return (s || t.content).replace(/\s+/g, " ").trim();
+  });
+  return lines.filter(Boolean).join(" ");
+}
+
 /** Share of the smaller box covered by the larger, sampled on an 11 x 5 grid. */
 function share(a: OBox, b: OBox): number {
   const [small, big] = a.hw * a.hh <= b.hw * b.hh ? [a, b] : [b, a];
@@ -207,7 +226,7 @@ export function checkSvgLabels(svg: string, opts: CheckOptions = {}): SvgCheck {
 
   const labels: LabelCheck[] = L.groups.map((g, index) => {
     const rep = g.drawn[0] ?? g.texts[0]!;
-    const res: LabelCheck = { index, name: rep.content, boxes: [], line: null, overlaps: [], clipped: false, masked: null };
+    const res: LabelCheck = { index, name: nameOf(g.drawn.length ? g.drawn : [rep]), boxes: [], line: null, overlaps: [], clipped: false, masked: null };
     if (g.reason) res.skipped = g.reason;
     let halo = false;
     let plated = boxesOf[index]!.length > 0;

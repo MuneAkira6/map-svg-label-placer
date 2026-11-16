@@ -45,6 +45,12 @@ describe("checkSvgLabels", () => {
       { kind: "textPath", text: "River", corners: [[10, 200], [300, 200], [300, 240], [10, 240]] },
     ]);
   });
+  it("names a name of several lines with a space between them", () => {
+    const names = checkSvgLabels(doc(`<text x="50" y="50" ${LS}><tspan x="50" y="50">Mission</tspan><tspan x="50" dy="22">Church</tspan></text>
+      <text x="200" y="50" ${LS}>Mackinac</text><text x="200" y="72" ${LS}>Island</text>
+      <text x="50" y="200" ${LS}><tspan x="50 64 78 92" y="200">WORD</tspan></text>`)).labels.map((l) => l.name);
+    expect(names).toEqual(["Mission Church", "Mackinac Island", "WORD"]);
+  });
   it("judges every line of a name on its own", () => {
     const c = checkSvgLabels(doc(`<path d="M0,123 H400" stroke="#000"/>
       <text x="100" y="100" text-anchor="middle" ${LS}>Saint</text><text x="100" y="124" text-anchor="middle" ${LS}>Petersburg</text>`));
