@@ -47,7 +47,7 @@ export type SvgText = {
   fontWeight: string;
   /** letter-spacing as written ("normal", "2px", "0.1em"), if any. */
   letterSpacing: string | undefined;
-  /** Laid out along a <textPath> (cannot be moved by x and y). */
+  /** Has a <textPath>: in a browser it is laid out along the path; librsvg (Commons) does not draw it. */
   onPath: boolean;
   anchor: Anchor;
   /** writing-mode is top to bottom (tb, tb-rl, vertical-rl, …). */
@@ -69,8 +69,11 @@ export type SvgText = {
 };
 
 const VERTICAL = new Set(["tb", "tb-rl", "tb-lr", "vertical-rl", "vertical-lr"]);
-/** Elements inside <text> whose characters are drawn; the content of any other element is not. */
-const TEXT_CONTENT = new Set(["tspan", "a", "textPath", "altGlyph"]);
+/**
+ * Elements inside <text> whose characters librsvg draws (children_to_chunks in rsvg/src/text.rs); the content
+ * of any other element is not drawn. That includes <textPath>, which librsvg does not support (T11420).
+ */
+const TEXT_CONTENT = new Set(["tspan", "a"]);
 
 function anchorOf(v: string | undefined): Anchor {
   const a = v?.trim();

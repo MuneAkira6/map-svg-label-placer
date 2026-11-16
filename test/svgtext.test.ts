@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { apply } from "../src/geometry.js";
+import { parseSvg } from "../src/svg.js";
 import { moveTexts, readTexts, shortNumber } from "../src/svgtext.js";
 
 const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="100">
@@ -31,6 +32,38 @@ describe("readTexts", () => {
   });
   it("finds the x and y values of the text and its tspans", () => {
     expect(t[2]!.coords.map((c) => [c.axis, c.values])).toEqual([["y", [30]], ["x", [100, 110]], ["y", [30]], ["x", [100]]]);
+  });
+});
+
+describe("what librsvg does not draw", () => {
+  const doc = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape">
+<path id="p" d="M0,50 L200,50"/>
+<text x="10" y="20">Plain<textPath xlink:href="#p">Along</textPath></text>
+<text><textPath xlink:href="#p">Only along</textPath></text>
+<flowRoot><flowRegion><rect width="100" height="40"/></flowRegion><flowPara>Flowed</flowPara></flowRoot>
+<foreignObject><svg><text x="0" y="0">Inside</text></svg></foreignObject>
+<inkscape:box><text x="0" y="0">Ink</text></inkscape:box>
+<svg:g><svg:text x="0" y="0">Prefixed</svg:text></svg:g>
+</svg>`;
+  const t = readTexts(doc);
+  it("skips the characters of a <textPath>", () => {
+    expect(t[0]!.chars.map((c) => c.ch).join("")).toBe("Plain");
+    expect(t[1]!.chars).toEqual([]);
+    expect(t.slice(0, 2).map((x) => x.onPath)).toEqual([true, true]);
+  });
+  it("draws nothing inside elements it does not know, or outside the SVG namespace", () => {
+    expect(t.map((x) => [x.content, x.hidden])).toEqual([
+      ["PlainAlong", false],
+      ["Only along", false],
+      ["Inside", true],
+      ["Ink", true],
+      ["Prefixed", false],
+    ]);
+  });
+  it("takes no obstacles from a <flowRoot>, and says it is not shown", () => {
+    const o = parseSvg(doc.replace("<rect ", '<rect stroke="black" '), { areaIds: [], rectMax: 1000, textCharEm: 0.6, textDescent: 2 });
+    expect(o.segs).toEqual([]);
+    expect(o.warnings.some((w) => w.includes("<flowRoot>"))).toBe(true);
   });
 });
 

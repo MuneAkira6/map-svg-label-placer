@@ -51,6 +51,16 @@ const NON_RENDER = new Set([
   "defs", "clipPath", "mask", "symbol", "pattern", "marker", "linearGradient", "radialGradient",
   "filter", "title", "desc", "metadata", "style", "script",
 ]);
+/**
+ * Elements librsvg knows (rsvg/src/element.rs, 2.60). Any other element, and any element outside the SVG
+ * namespace, is drawn as nothing, children included: <flowRoot>, <foreignObject>, Inkscape's own elements.
+ */
+const LIBRSVG_ELEMENTS = new Set([
+  "a", "circle", "clipPath", "defs", "ellipse", "filter", "g", "image", "line", "linearGradient", "marker",
+  "mask", "path", "pattern", "polygon", "polyline", "radialGradient", "rect", "stop", "style", "svg", "switch",
+  "symbol", "text", "text2", "tref", "tspan", "use",
+]);
+const SVG_NS = /^(?:http:\/\/www\.w3\.org\/2000\/svg|&ns_svg;)$/;
 const INHERIT = [
   "stroke", "stroke-width", "fill", "font-size", "text-anchor", "visibility",
   "font-family", "font-weight", "font-style", "letter-spacing", "writing-mode", "xml:space",
@@ -178,8 +188,10 @@ export type SvgElement = {
   /** Computed font-size, px (units and relative sizes resolved; 16 by default). */
   fontSize: number;
   hidden: boolean;
-  /** Inside <defs>, <clipPath>, <mask>, <symbol>, … */
+  /** Inside <defs>, <clipPath>, <mask>, <symbol>, …, or inside an element librsvg does not know. */
   nonrender: boolean;
+  /** An element librsvg does not know (<flowRoot>, <foreignObject>), where it would otherwise be drawn. */
+  unknown: boolean;
   /** Offsets of the start tag in the source string. */
   start: number;
   tagEnd: number;
@@ -189,7 +201,7 @@ export type SvgElement = {
   switchAt: number | null;
   /** The child of that <switch> the element is or is inside, with its systemLanguage. */
   alt: SwitchAlt | null;
-  /** For <text>: offset of its "</text>" (tagEnd if none), and its content trimmed and unescaped. */
+  /** For <text>: offset of its "</text>" or "</svg:text>" (tagEnd if none), and its content trimmed and unescaped. */
   textEnd: number;
   content: string;
 };
@@ -200,6 +212,9 @@ export type SvgElement = {
  */
 export function* walkSvg(svg: string): Generator<SvgElement> {
   const sheet = readStyleSheet(svg, unescapeEntities);
+  // Prefixes bound to the SVG namespace (svg:g). Other prefixes (inkscape:, sodipodi:) are not SVG.
+  const svgPrefixes = new Set<string>();
+  for (const m of svg.matchAll(/xmlns:([\w.-]+)\s*=\s*["']([^"']*)["']/g)) if (SVG_NS.test(m[2]!)) svgPrefixes.add(m[1]!);
   const stack: Ctx[] = [
     { tag: null, m: IDENT, inh: new Map(), fontSize: 16.0, hidden: false, nonrender: false, ids: [], switchAt: null, alt: null },
   ];
@@ -222,7 +237,9 @@ export function* walkSvg(svg: string): Generator<SvgElement> {
     const fontSize = fontSizePx(a.get("font-size"), parent.fontSize);
     const vis = inh.get("visibility");
     const hidden = parent.hidden || a.get("display") === "none" || vis === "hidden" || vis === "collapse";
-    const nonrender = parent.nonrender || NON_RENDER.has(local);
+    const colon = tag.indexOf(":");
+    const known = LIBRSVG_ELEMENTS.has(local) && (colon < 0 || svgPrefixes.has(tag.slice(0, colon)));
+    const nonrender = parent.nonrender || NON_RENDER.has(local) || !known;
     const id = a.get("id");
     const ids = id === undefined ? parent.ids : [...parent.ids, id];
     const switchAt = local === "switch" ? mt.index : parent.switchAt;
@@ -233,14 +250,14 @@ export function* walkSvg(svg: string): Generator<SvgElement> {
     let content = "";
     if (local === "text") {
       if (!selfclose) {
-        textEnd = svg.indexOf("</text>", tagEnd);
+        textEnd = svg.indexOf(`</${tag}>`, tagEnd);
         if (textEnd < 0) textEnd = tagEnd;
         content = pyStrip(unescapeEntities(svg.slice(tagEnd, textEnd).replace(/<[^>]*>/g, "")));
       }
       pos = textEnd;
     }
     yield {
-      local, attrs: a, m, parentM: parent.m, inh, fontSize, hidden, nonrender, start: mt.index, tagEnd,
+      local, attrs: a, m, parentM: parent.m, inh, fontSize, hidden, nonrender, unknown: !known && !parent.nonrender, start: mt.index, tagEnd,
       ancestors: parent.ids, switchAt: parent.switchAt, alt, textEnd, content,
     };
   }
@@ -356,6 +373,9 @@ export function parseSvg(svg: string, opts: SvgReadOptions): Obstacles {
         oboxes.push([ccx, ccy, (w * sc) / 2, ((y1 - y0) * sc) / 2, matAngle(m)]);
       }
       continue;
+    }
+    if (local === "flowRoot" && el.unknown && !hidden) {
+      warn("<flowRoot> (flowed text from Inkscape 0.4x) is not drawn by librsvg, so Commons does not show it");
     }
     if ((local === "use" || local === "image") && active) {
       warn(`<${local}> is not read (lines and text inside it are not obstacles)`);

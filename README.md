@@ -56,8 +56,9 @@ The config and label files use the format of the Python scripts, which is docume
 
 1. Read the SVG: every stroked path, line, polyline and polygon becomes line segments, and small rects, circles and
    the SVG's own text become solid obstacles. Transforms, inherited styles and `<style>` rules are applied; anything
-   in `<defs>` or hidden is skipped. Bad path data is read up to the error, as librsvg draws it. The segments go into
-   a uniform grid.
+   in `<defs>`, hidden, or inside an element librsvg does not draw (`<flowRoot>`, `<foreignObject>`) is skipped.
+   librsvg does not draw text along a `<textPath>` either, so such text is reported, not moved. Bad path data is
+   read up to the error, as librsvg draws it. The segments go into a uniform grid.
 2. Size each label. SVG texts are laid out character by character with the font settings and `x`/`y`/`dx`/`dy` of
    every `<tspan>`, line by line, and measured with the fonts Commons renders them in (below). Texts that belong
    together become one label: the language versions in a `<switch>`, and the lines of a name written as separate
@@ -99,6 +100,9 @@ test maps had not:
 | `viewBox` not starting at 0,0, so names were kept inside the wrong frame | 43 | |
 | Path data with an error, which stopped the whole run | 2 | |
 | A `<switch>` of language layers read as one label holding every name of the map | 5 | |
+| Texts written `<svg:text>`, with a namespace prefix, not read at all | 5 | 290 |
+| Text along a `<textPath>`, which librsvg does not draw, read as labels | 4 | 46 |
+| `<flowRoot>` text, which librsvg does not draw, not reported | 9 | 28 |
 
 ## Matching the Python version
 

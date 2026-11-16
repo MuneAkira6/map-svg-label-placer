@@ -99,6 +99,9 @@ export function readSvgLabels(svg: string, tc: SvgTextConfig = {}): SvgLabels {
     return box !== null;
   });
 
+  const along = all.filter((t) => !t.hidden && t.onPath && !boxOf.has(t)).length;
+  if (along) warnings.push(`${along} texts along a <textPath> are not drawn by librsvg, so Commons does not show them`);
+
   const grouped = groupTexts(texts, boxOf, tc.lang);
   warnings.push(...grouped.warnings);
 
