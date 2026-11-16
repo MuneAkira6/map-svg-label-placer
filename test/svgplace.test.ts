@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { placeSvgTexts } from "../src/svgplace.js";
+import { placeSvgTexts, svgViewport } from "../src/svgplace.js";
 import { readTexts } from "../src/svgtext.js";
 
 // Names written straight onto the lines they should avoid, as in many hand-made maps.
@@ -72,3 +72,28 @@ describe("placeSvgTexts with an offset viewBox", () => {
   });
 });
 
+
+describe("svgViewport", () => {
+  const root = (attrs: string) => svgViewport(`<svg xmlns="http://www.w3.org/2000/svg" ${attrs}></svg>`);
+
+  it("reads the size in px and keeps the viewBox as the frame", () => {
+    expect(root(`width="210mm" height="297mm" viewBox="0 0 210 297"`)).toEqual({
+      frame: [0, 0, 210, 297], width: 210 * 3.7795275, height: 297 * 3.7795275, preserveAspectRatio: "xMidYMid meet",
+    });
+  });
+
+  it("uses the size in px as the frame when there is no viewBox", () => {
+    expect(root(`width="2in" height="1in"`).frame).toEqual([0, 0, 192, 96]);
+  });
+
+  it("fills in a missing size as MediaWiki does", () => {
+    expect(root(`viewBox="0 0 2000 1000"`)).toMatchObject({ width: 512, height: 256 });
+    expect(root(`height="300" viewBox="0 0 2000 1000"`)).toMatchObject({ width: 600, height: 300 });
+    expect(root(`width="100%" viewBox="0 0 2000 1000"`)).toMatchObject({ width: 512, height: 256 });
+  });
+
+  it("keeps preserveAspectRatio", () => {
+    expect(root(`width="100" height="100" viewBox="0 0 200 100" preserveAspectRatio="xMinYMin slice"`).preserveAspectRatio)
+      .toBe("xMinYMin slice");
+  });
+});

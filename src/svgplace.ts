@@ -49,15 +49,57 @@ export type SvgPlaceResult = {
   warnings: string[];
 };
 
-/** The map frame in user units: min-x, min-y, width, height of the viewBox (or 0, 0, width, height). */
-export function rootFrame(svg: string): [number, number, number, number] {
+/** How the map's coordinates sit in the picture Commons draws of it. */
+export type SvgViewport = {
+  /** The map frame in user units: min-x, min-y, width, height of the viewBox (or 0, 0, width, height). */
+  frame: [number, number, number, number];
+  /** Size of the picture in px, as MediaWiki reads it; thumbnails keep this aspect ratio. */
+  width: number;
+  height: number;
+  /** How the viewBox is fitted into that size (default "xMidYMid meet"). */
+  preserveAspectRatio: string;
+};
+
+// Px per unit as MediaWiki's SVGReader::scaleSVGUnit has them (96 dpi, 1em = 16px); % is of 512.
+const UNIT_PX: Record<string, number> = {
+  px: 1, pt: 1.333333, pc: 16, mm: 3.7795275, q: 0.944881, cm: 37.795275, in: 96, em: 16, rem: 16, ch: 8, ex: 8,
+};
+
+function lengthIn(v: string | undefined, percentOf: number): number | undefined {
+  if (!v || !v.trim()) return undefined;
+  const m = /^\s*([-+]?\d*(?:\.\d+|\d+)(?:[eE][-+]?\d+)?)\s*(rem|em|ex|px|pt|pc|cm|mm|in|ch|q|%)\s*$/i.exec(v);
+  if (!m) return Number.parseFloat(v) || 0;
+  const n = Number(m[1]);
+  const unit = m[2]!.toLowerCase();
+  return unit === "%" ? (n / 100) * percentOf : n * UNIT_PX[unit]!;
+}
+
+/**
+ * The root <svg>'s frame, size and preserveAspectRatio. The size follows MediaWiki (SVGReader::handleSVGAttribs):
+ * a missing width or height comes from the other and the viewBox's aspect ratio, and with neither the width is 512.
+ */
+export function svgViewport(svg: string): SvgViewport {
   for (const el of walkSvg(svg)) {
     if (el.local !== "svg") continue;
-    const vb = (el.attrs.get("viewBox") ?? "").trim().split(/[\s,]+/).map(Number);
-    if (vb.length === 4 && vb.every(Number.isFinite)) return [vb[0]!, vb[1]!, vb[2]!, vb[3]!];
-    return [0, 0, num(el.attrs.get("width"), 0), num(el.attrs.get("height"), 0)];
+    const a = el.attrs;
+    const vb = (a.get("viewBox") ?? "").trim().split(/[\s,]+/).map(Number);
+    const hasViewBox = vb.length === 4 && vb.every(Number.isFinite);
+    const aspect = hasViewBox && vb[2]! > 0 && vb[3]! > 0 ? vb[2]! / vb[3]! : 1;
+    let width = lengthIn(a.get("width"), 512);
+    let height = lengthIn(a.get("height"), 512 / aspect);
+    if (width === undefined && height === undefined) width = 512;
+    width ??= height! * aspect;
+    height ??= width / aspect;
+    const frame: [number, number, number, number] = hasViewBox ? [vb[0]!, vb[1]!, vb[2]!, vb[3]!] : [0, 0, width, height];
+    const preserveAspectRatio = (a.get("preserveAspectRatio") ?? "").trim() || "xMidYMid meet";
+    return { frame, width, height, preserveAspectRatio };
   }
   throw new Error("no <svg> element");
+}
+
+/** The map frame in user units: min-x, min-y, width, height of the viewBox (or 0, 0, width, height). */
+export function rootFrame(svg: string): [number, number, number, number] {
+  return svgViewport(svg).frame;
 }
 
 /** Centre of the element with this id (circle, ellipse, rect, or the mean of a path's points), root coordinates. */
