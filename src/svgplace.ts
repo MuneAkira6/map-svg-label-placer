@@ -3,12 +3,12 @@
 // back by changing only their x and y values.
 
 import type { AnchorRule, Config, Label, LabelDoc } from "./config.js";
-import { measureText } from "./fonts.js";
 import { apply, matAngle, matScale } from "./geometry.js";
 import { placeLabels, type Placement } from "./place.js";
 import { degrees, truthy } from "./py.js";
 import { num, walkSvg } from "./svg.js";
 import { moveTexts, readTexts, type SvgText } from "./svgtext.js";
+import { layoutText, type Box } from "./textlayout.js";
 
 export type SvgTextConfig = {
   /** Ids of texts, or of groups around them, that stay where they are (legend, scale bar, title). */
@@ -69,34 +69,20 @@ function symbolCentre(svg: string, id: string): [number, number] | null {
   return null;
 }
 
-function letterSpacingPx(v: string | undefined, fontSize: number): number {
-  if (!v || v === "normal") return 0;
-  const n = num(v, 0);
-  return v.trim().endsWith("em") ? n * fontSize : n;
-}
-
 const inAny = (t: SvgText, ids: readonly string[] | undefined) =>
   ids !== undefined && ((t.id !== undefined && ids.includes(t.id)) || t.ancestors.some((a) => ids.includes(a)));
-
-/** Box of a text in its own coordinates: [left, top, right, bottom]. */
-function localBox(t: SvgText): [number, number, number, number] {
-  const m = measureText(t.content, {
-    fontFamily: t.fontFamily,
-    fontSize: t.fontSize,
-    fontWeight: t.fontWeight,
-    letterSpacing: letterSpacingPx(t.letterSpacing, t.fontSize),
-  });
-  const x = t.coords.find((c) => c.axis === "x")?.values[0] ?? t.x;
-  const y = t.coords.find((c) => c.axis === "y")?.values[0] ?? t.y;
-  const left = t.anchor === "middle" ? x - m.width / 2 : t.anchor === "end" ? x - m.width : x;
-  return [left, y - m.ascent, left + m.width, y + m.descent];
-}
 
 export function placeSvgTexts(svg: string, cfg: Config & { svg_text?: SvgTextConfig } = {}): SvgPlaceResult {
   const tc = cfg.svg_text ?? {};
   const [W, H] = rootSize(svg);
   const warnings: string[] = [];
-  const texts = readTexts(svg).filter((t) => !t.hidden && t.content);
+  const boxOf = new Map<SvgText, Box>();
+  const texts = readTexts(svg).filter((t) => {
+    if (t.hidden || !t.content) return false;
+    const { box } = layoutText(t);
+    if (box) boxOf.set(t, box);
+    return box !== null;
+  });
 
   // One group per text, or per <switch> of language versions.
   const bySwitch = new Map<number, SvgText[]>();
@@ -117,10 +103,10 @@ export function placeSvgTexts(svg: string, cfg: Config & { svg_text?: SvgTextCon
   const seen = new Map<string, number>();
   const groups: TextGroup[] = groupsOf.map((ts) => {
     const rep = ts.find((t) => t.lang === undefined) ?? ts[0]!;
-    let [l, t, r, b] = localBox(rep);
+    let [l, t, r, b] = boxOf.get(rep)!;
     for (const o of ts) {
       if (o === rep) continue;
-      const [l2, t2, r2, b2] = localBox(o);
+      const [l2, t2, r2, b2] = boxOf.get(o)!;
       [l, t, r, b] = [Math.min(l, l2), Math.min(t, t2), Math.max(r, r2), Math.max(b, b2)];
     }
     const sc = matScale(rep.m);
@@ -133,6 +119,7 @@ export function placeSvgTexts(svg: string, cfg: Config & { svg_text?: SvgTextCon
     };
     let reason: string | undefined;
     if (ts.some((o) => o.onPath)) reason = "laid out along a textPath";
+    else if (ts.some((o) => o.vertical)) reason = "vertical text";
     const fixed = reason !== undefined || ts.some((o) => inAny(o, tc.fixed)) || (tc.move !== undefined && !ts.some((o) => inAny(o, tc.move)));
     const n = seen.get(rep.content) ?? 0;
     seen.set(rep.content, n + 1);

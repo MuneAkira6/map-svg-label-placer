@@ -40,7 +40,7 @@ export type SvgReadOptions = {
   skipTextAt?: ReadonlySet<number>;
 };
 
-const TAG_RE = new RegExp(
+export const TAG_RE = new RegExp(
   String.raw`<!--[\s\S]*?-->|<!\[CDATA\[[\s\S]*?\]\]>|<\?[\s\S]*?\?>|<!DOCTYPE[^>]*>` +
     String.raw`|<(\/?)([A-Za-z][\p{L}\p{N}_:.\-]*)((?:\s+[^\s=>\/]+\s*=\s*(?:"[^"]*"|'[^']*'))*)\s*(\/?)>`,
   "gu",
@@ -138,6 +138,16 @@ export function elementAttrs(attrText: string, local?: string, sheet?: StyleShee
   return a;
 }
 
+/** The inherited presentation attributes of an element with attributes `a`. */
+export function inherit(parentInh: ReadonlyMap<string, string>, a: ReadonlyMap<string, string>): Map<string, string> {
+  const inh = new Map(parentInh);
+  for (const k of INHERIT) {
+    const v = a.get(k);
+    if (v !== undefined) inh.set(k, v);
+  }
+  return inh;
+}
+
 type Ctx = {
   tag: string | null;
   m: Mat;
@@ -202,11 +212,7 @@ export function* walkSvg(svg: string): Generator<SvgElement> {
     const parent = stack[stack.length - 1]!;
     const a = elementAttrs(attrText, local, sheet);
     const m = a.has("transform") ? matMul(parent.m, parseTransform(a.get("transform"))) : parent.m;
-    const inh = new Map(parent.inh);
-    for (const k of INHERIT) {
-      const v = a.get(k);
-      if (v !== undefined) inh.set(k, v);
-    }
+    const inh = inherit(parent.inh, a);
     const fontSize = fontSizePx(a.get("font-size"), parent.fontSize);
     const vis = inh.get("visibility");
     const hidden = parent.hidden || a.get("display") === "none" || vis === "hidden" || vis === "collapse";
