@@ -1,0 +1,169 @@
+// Move the names that checkSvgLabels finds with a line through their letters, and only those, to the nearest
+// place where the same check passes. Only the x and y of the texts change.
+
+import { checkScene, type OBox, type SvgCheck } from "./check.js";
+import { svgViewport } from "./svgplace.js";
+import { moveTexts, type SvgText } from "./svgtext.js";
+
+export type FixOptions = {
+  /** Language the map is drawn in, which picks the version shown in a <switch> (default "en", as Commons). */
+  lang?: string;
+  /** How far a name may move, in multiples of its height (default 3). */
+  reach?: number;
+  /** Decimals of the rewritten x and y (default 2). */
+  decimals?: number;
+};
+
+export type FixMove = {
+  /** Index in the check's labels. */
+  index: number;
+  name: string;
+  /** How far the name moved, in root coordinates. */
+  dx: number;
+  dy: number;
+  /** No line comes within a pixel of the name's box; false when one still crosses the edge of the box. */
+  clear: boolean;
+};
+
+export type FixResult = {
+  /** The map with the names moved; every other byte is unchanged. */
+  svg: string;
+  /** The check of the original map. */
+  before: SvgCheck;
+  moves: FixMove[];
+  /** Names with a line through them that had no free place within reach, and stay. */
+  stuck: { index: number; name: string }[];
+  /** Root units per pixel at the size MediaWiki gives the map. */
+  unitsPerPx: number;
+};
+
+/** Do two rotated boxes overlap? (Separating axis test.) */
+function overlap(a: OBox, b: OBox): boolean {
+  for (const t of [a.ang, a.ang + Math.PI / 2, b.ang, b.ang + Math.PI / 2]) {
+    const c = Math.cos(t);
+    const s = Math.sin(t);
+    const span = (o: OBox): [number, number] => {
+      const oc = Math.cos(o.ang);
+      const os = Math.sin(o.ang);
+      const r = Math.abs(o.hw * (oc * c + os * s)) + Math.abs(o.hh * (oc * s - os * c));
+      const m = o.cx * c + o.cy * s;
+      return [m - r, m + r];
+    };
+    const [a0, a1] = span(a);
+    const [b0, b1] = span(b);
+    if (a1 < b0 || b1 < a0) return false;
+  }
+  return true;
+}
+
+/** Gap between a box and a point, 0 inside. */
+function gapTo(b: OBox, x: number, y: number): number {
+  const c = Math.cos(b.ang);
+  const s = Math.sin(b.ang);
+  const u = Math.abs((x - b.cx) * c + (y - b.cy) * s) - b.hw;
+  const v = Math.abs(-(x - b.cx) * s + (y - b.cy) * c) - b.hh;
+  return Math.hypot(Math.max(u, 0), Math.max(v, 0));
+}
+
+export function fixSvgLabels(svg: string, opts: FixOptions = {}): FixResult {
+  const { check, groups, lines, shows, paint, boxesOf, obst, copies } = checkScene(svg, { lang: opts.lang });
+  const [X0, Y0, W, H] = check.frame;
+  const view = svgViewport(svg);
+  const k = Math.max(W / view.width, H / view.height);
+  const boxes: OBox[][] = boxesOf.map((bs) => bs.map(({ cx, cy, hw, hh, ang }) => ({ cx, cy, hw, hh, ang })));
+  const todo = check.labels.filter((l) => !l.skipped && !groups[l.index]!.fixed && l.line === "core" && !l.masked && boxes[l.index]!.length);
+
+  const moves: FixMove[] = [];
+  const stuck: FixResult["stuck"] = [];
+  for (const lb of todo) {
+    const own = boxes[lb.index]!;
+    const mine = new Set([lb.index, ...(copies.get(lb.index) ?? [])]);
+    const h = Math.max(...own.map((b) => 2 * b.hh));
+    // A name with no height (letters the font tables do not cover, as Arabic) cannot be placed.
+    if (!(h > 0)) {
+      stuck.push({ index: lb.index, name: lb.name });
+      continue;
+    }
+    const reach = (opts.reach ?? 3) * h;
+    const rad = (b: OBox) => Math.hypot(b.hw, b.hh);
+    const [ox, oy] = [own.reduce((s, b) => s + b.cx, 0) / own.length, own.reduce((s, b) => s + b.cy, 0) / own.length];
+    const span = Math.max(...own.map((b) => Math.hypot(b.cx - ox, b.cy - oy) + rad(b))) + reach + h;
+    const others = boxes.flatMap((bs, i) => (mine.has(i) ? [] : bs.filter((b) => Math.hypot(b.cx - ox, b.cy - oy) <= span + rad(b))));
+    const gap = 0.15 * h;
+    const margin = k;
+    const centre = (dx: number, dy: number): [number, number] => [
+      own.reduce((s, b) => s + b.cx, 0) / own.length + dx,
+      own.reduce((s, b) => s + b.cy, 0) / own.length + dy,
+    ];
+    // The area the name is in (the last shape drawn under its middle), which it must not leave.
+    const area = paint.topAt(...centre(0, 0));
+    // A point symbol within a letter height of the name is taken to be the one it names: it must stay the
+    // nearest symbol to the name, and no further from it than a letter height (or than it was).
+    const symbols = obst.circles.filter(([, , r]) => r <= h).map(([x, y, r]) => ({ x, y, r }));
+    const dist = (bs: OBox[], s: { x: number; y: number; r: number }) => Math.min(...bs.map((b) => gapTo(b, s.x, s.y))) - s.r;
+    const near = symbols.map((s) => ({ s, d: dist(own, s) })).filter((e) => e.d <= h).sort((p, q) => p.d - q.d)[0];
+    const keep = near ? Math.max(near.d, h) : 0;
+
+    // Cheap tests first; once a place with a line along the edge is in hand, only a clear one is worth testing.
+    const tierOf = (dx: number, dy: number, onlyClear: boolean): 1 | 2 | 3 => {
+      const moved = own.map((b) => ({ ...b, cx: b.cx + dx, cy: b.cy + dy }));
+      for (const b of moved) {
+        const c = Math.cos(b.ang);
+        const s = Math.sin(b.ang);
+        const ex = Math.abs(b.hw * c) + Math.abs(b.hh * s);
+        const ey = Math.abs(b.hw * s) + Math.abs(b.hh * c);
+        if (b.cx - ex < X0 || b.cx + ex > X0 + W || b.cy - ey < Y0 || b.cy + ey > Y0 + H) return 3;
+      }
+      if (near) {
+        const d = dist(moved, near.s);
+        if (d > keep || symbols.some((p) => p !== near.s && dist(moved, p) < d)) return 3;
+      }
+      for (const b of moved) {
+        const big = { ...b, hw: b.hw + gap, hh: b.hh + gap };
+        if (others.some((o) => overlap(big, o)) || symbols.some((p) => gapTo(big, p.x, p.y) < p.r)) return 3;
+      }
+      if (paint.topAt(...centre(dx, dy)) !== area) return 3;
+      const edge = moved.some((b) => lines.hits({ ...b, hw: b.hw + margin, hh: b.hh + margin }, 1, 1, shows));
+      if (!edge) return 1;
+      if (onlyClear || moved.some((b) => lines.hits(b, 0.9, 0.5, shows))) return 3;
+      return 2;
+    };
+
+    // Rings around the name, nearest first, a quarter of its height apart; flatter than round, as text is wide.
+    const step = h / 4;
+    let best: [number, number] | null = null;
+    let bestTier = 3;
+    for (let r = step; r <= reach + 1e-9 && bestTier > 1; r += step) {
+      const n = Math.max(8, Math.ceil((2 * Math.PI * r) / step));
+      for (let t = 0; t < n; t++) {
+        const th = (2 * Math.PI * t) / n;
+        const dx = r * Math.cos(th);
+        const dy = r * Math.sin(th) * 0.75;
+        const tier = tierOf(dx, dy, bestTier === 2);
+        if (tier < bestTier) {
+          best = [dx, dy];
+          bestTier = tier;
+          if (tier === 1) break;
+        }
+      }
+    }
+    if (best === null) {
+      stuck.push({ index: lb.index, name: lb.name });
+      continue;
+    }
+    const [dx, dy] = best;
+    for (const i of mine) {
+      for (const b of boxes[i]!) {
+        b.cx += dx;
+        b.cy += dy;
+      }
+    }
+    moves.push({ index: lb.index, name: lb.name, dx, dy, clear: bestTier === 1 });
+  }
+
+  const byText = new Map<SvgText, readonly [number, number]>();
+  for (const m of moves) {
+    for (const i of [m.index, ...(copies.get(m.index) ?? [])]) for (const t of groups[i]!.texts) byText.set(t, [m.dx, m.dy]);
+  }
+  return { svg: moveTexts(svg, byText, opts.decimals ?? 2), before: check, moves, stuck, unitsPerPx: k };
+}

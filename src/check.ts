@@ -56,7 +56,7 @@ export type CheckOptions = {
   minLinePx?: number;
 };
 
-type OBox = { cx: number; cy: number; hw: number; hh: number; ang: number };
+export type OBox = { cx: number; cy: number; hw: number; hh: number; ang: number };
 
 function quad(b: OBox): Quad {
   const c = Math.cos(b.ang);
@@ -126,7 +126,7 @@ const area = (q: readonly Pt[]) =>
   Math.abs(q.reduce((s, [x, y], i) => s + x * q[(i + 1) % 4]![1] - q[(i + 1) % 4]![0] * y, 0)) / 2;
 
 /** Stroked segments in a uniform grid; finds those that meet a rotated box, exactly (no sampling). */
-class Lines {
+export class Lines {
   private readonly grid = new Map<number | string, number[]>();
   private readonly seen: Uint32Array;
   private stamp = 0;
@@ -323,6 +323,17 @@ class Paint {
     return false;
   }
 
+  /** Source offset of the last-drawn shape under the point (-1 if none): which area a name sits in. */
+  topAt(x: number, y: number): number {
+    const [gx, gy] = this.cellOf(x, y);
+    const near = this.grid[gy * 32 + gx]!;
+    for (let k = near.length - 1; k >= 0; k--) {
+      const f = this.fills[near[k]!]!;
+      if (insideFill(f, x, y)) return f.at;
+    }
+    return -1;
+  }
+
   shows = (g: Seg, b: OBox, bu: number, bv: number): boolean => {
     if (g.at === undefined) return true;
     const c = Math.cos(b.ang);
@@ -343,6 +354,11 @@ class Paint {
 const STROKE_IN_TSPAN = /<tspan\b[^>]*(?:\sstroke\s*=\s*["'](?!none)[^"']+["']|stroke\s*:\s*(?!none)[#a-z])/i;
 
 export function checkSvgLabels(svg: string, opts: CheckOptions = {}): SvgCheck {
+  return checkScene(svg, opts).check;
+}
+
+/** The check, with what it was worked out from: for moving the names it finds. Internal. */
+export function checkScene(svg: string, opts: CheckOptions = {}) {
   const lang = opts.lang ?? "en";
   const L = readSvgLabels(svg, { lang });
   const [X0, Y0, W, H] = L.frame;
@@ -414,7 +430,8 @@ export function checkSvgLabels(svg: string, opts: CheckOptions = {}): SvgCheck {
   const segs = fsList.length ? obst.segs.filter((g) => 2 * g.hw >= minWidth) : [];
   const cell = Math.max(fsMed * 2, Math.max(W, H) / 1000, 1e-6);
   const lines = new Lines(segs, cell);
-  const shows = new Paint(fills, strokeOf, L.frame).shows;
+  const paint = new Paint(fills, strokeOf, L.frame);
+  const shows = paint.shows;
 
   const labels: LabelCheck[] = L.groups.map((g, index) => {
     const rep = g.drawn[0] ?? g.texts[0]!;
@@ -443,6 +460,8 @@ export function checkSvgLabels(svg: string, opts: CheckOptions = {}): SvgCheck {
   const flat = labels.flatMap((lb) => (lb.skipped ? [] : boxesOf[lb.index]!.map((b) => ({ lb, b }))));
   const key = (lb: LabelCheck, b: OBox & { fs: number }) => `${lb.name}@${Math.round(b.cx / Math.max(b.fs, 1e-9))},${Math.round(b.cy / Math.max(b.fs, 1e-9))}`;
   const firstAt = new Map<string, LabelCheck>();
+  /** Labels drawn again on top: index of the top copy to the indices of the copies under it. */
+  const copies = new Map<number, number[]>();
   for (const { lb, b } of flat) {
     if (lb.boxes.length !== 1) continue;
     const k = key(lb, b);
@@ -454,6 +473,7 @@ export function checkSvgLabels(svg: string, opts: CheckOptions = {}): SvgCheck {
     const [under, over] = [first, lb];
     if (under.masked === "halo" || over.masked === "halo") over.masked = "halo";
     under.skipped = "drawn again on top (as the outline under a name, say)";
+    copies.set(over.index, [...(copies.get(over.index) ?? []), under.index, ...(copies.get(under.index) ?? [])]);
     firstAt.set(k, over);
   }
 
@@ -497,5 +517,5 @@ export function checkSvgLabels(svg: string, opts: CheckOptions = {}): SvgCheck {
     }
     unshown.push({ kind: "textPath", text: t.content, corners });
   }
-  return { frame: L.frame, labels, unshown, warnings };
+  return { check: { frame: L.frame, labels, unshown, warnings } as SvgCheck, groups: L.groups, lines, shows, paint, boxesOf, obst, copies };
 }

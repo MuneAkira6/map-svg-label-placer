@@ -16,3 +16,5 @@ export { moveTexts, readTexts } from "./svgtext.js";
 export type { CharStyle, SvgText, TextChar } from "./svgtext.js";
 export { measureText, resolveFont } from "./fonts.js";
 export type { TextMetrics, TextStyle } from "./fonts.js";
+export { fixSvgLabels } from "./fix.js";
+export type { FixMove, FixOptions, FixResult } from "./fix.js";
