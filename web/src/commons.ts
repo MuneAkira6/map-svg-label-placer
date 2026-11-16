@@ -37,7 +37,7 @@ type ImageInfo = {
 async function query(params: Record<string, string>): Promise<{ title: string; missing?: boolean; invalid?: boolean; imageinfo?: ImageInfo[] } | undefined> {
   const q = new URLSearchParams({ action: "query", format: "json", formatversion: "2", origin: "*", redirects: "1", ...params });
   const res = await fetch(`${API}?${q}`, { headers: { "Api-User-Agent": AGENT } });
-  if (!res.ok) throw new Error(`Commons answered HTTP ${res.status}. Try again later.`);
+  if (!res.ok) throw new Error(`Commons returned HTTP ${res.status}. Try again later.`);
   const data = await res.json();
   if (data.error) throw new Error(`Commons: ${data.error.info}`);
   return data.query?.pages?.[0];
@@ -68,7 +68,7 @@ export async function lookUp(title: string, lang: string): Promise<CommonsFile> 
   const info = page?.imageinfo?.[0];
   if (!page || page.missing || page.invalid || !info) throw new Error(`There is no file called “${title.slice(5)}” on Wikimedia Commons.`);
   if (info.mime !== "image/svg+xml") throw new Error(`${page.title} is not an SVG file.`);
-  if (!info.thumburl) throw new Error(`Commons gave no rendering of ${page.title}.`);
+  if (!info.thumburl) throw new Error(`Commons returned no PNG of ${page.title}.`);
   const meta = info.extmetadata ?? {};
   return {
     title: page.title,

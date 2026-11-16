@@ -11,21 +11,21 @@ const EXAMPLES = ["File:Battle of hastings1.svg", "File:China-Manchukuo-map.svg"
 type Kind = "core" | "edge" | "overlap" | "clipped" | "masked" | "unshown" | "skipped";
 
 const LISTS: { kind: Kind; title: string; color: string; note: string }[] = [
-  { kind: "core", title: "Line through the letters", color: "#CC35A5", note: "A line crosses the middle of the name." },
+  { kind: "core", title: "Line through the letters", color: "#CC35A5", note: "A line crosses the middle of the letters." },
   { kind: "edge", title: "Line across the box", color: "#3A7DDC", note: "A line crosses the name's box, but not the middle of the letters." },
-  { kind: "overlap", title: "Names on top of each other", color: "#D3AA00", note: "Another name covers more than a tenth of this one." },
+  { kind: "overlap", title: "Names on top of each other", color: "#D3AA00", note: "Two names overlap by more than a tenth of the smaller one." },
   { kind: "clipped", title: "Cut off at the edge", color: "#166689", note: "Part of the name is outside the picture." },
   {
     kind: "masked",
     title: "Line hidden by a halo or plate",
     color: "#8C8C8C",
-    note: "A line crosses the name, but an outline around the letters or a plate under them covers it.",
+    note: "A line crosses the name, but an outline around the letters (a halo) or a filled shape under them (a plate) hides it.",
   },
   {
     kind: "unshown",
     title: "Text Commons does not draw",
     color: "#444444",
-    note: "Flowed text (flowRoot) and text along a path (textPath) are left out by librsvg, which Commons renders with.",
+    note: "librsvg, which Commons uses, does not draw flowed text (flowRoot) or text along a path (textPath).",
   },
   { kind: "skipped", title: "Not checked", color: "#8C8C8C", note: "" },
 ];
@@ -111,7 +111,7 @@ export function App() {
       const id = ++runId.current;
       setError(null);
       try {
-        setBusy("Looking the file up on Commons…");
+        setBusy("Looking up the file on Commons…");
         const file = await lookUp(title, language);
         if (id !== runId.current) return;
         let text = svgText.current?.key === file.svgUrl ? svgText.current.text : null;
@@ -121,7 +121,7 @@ export function App() {
           svgText.current = { key: file.svgUrl, text };
         }
         if (id !== runId.current) return;
-        setBusy("Reading the names…");
+        setBusy("Checking the names…");
         const reply = await runCheck(text, language);
         if (id !== runId.current) return;
         if (!reply.ok) throw new Error(`Could not read the SVG: ${reply.error}`);
@@ -143,7 +143,7 @@ export function App() {
       const id = ++runId.current;
       setError(null);
       try {
-        setBusy("Reading the names…");
+        setBusy("Checking the names…");
         const text = decodeSvg(await file.arrayBuffer());
         svgText.current = { key: `local:${file.name}:${file.size}:${file.lastModified}`, text };
         const reply = await runCheck(text, language);
@@ -273,7 +273,7 @@ export function App() {
       <header className="top">
         <h1>SVG map label check</h1>
         <nav>
-          <a href={`${REPO}#checking-a-map`}>How it works</a>
+          <a href={`${REPO}#checking-a-map`}>About</a>
           <a href={REPO}>Source</a>
         </nav>
       </header>
@@ -289,7 +289,9 @@ export function App() {
             <button type="button" className="small" onClick={() => zoomBy(1.5)} disabled={zoom >= 8} aria-label="Zoom in">
               +
             </button>
-            <span className="muted" title="Of the 1280 px rendering">{Math.round(scale * 100)}%</span>
+            <span className="muted" title={result?.source === "file" ? "Of the SVG's own size" : "Of the 1280 px PNG"}>
+              {Math.round(scale * 100)}%
+            </span>
             <label className="check">
               <input type="checkbox" checked={showClear} onChange={(e) => setShowClear(e.target.checked)} /> Outline the other names too
             </label>
@@ -341,7 +343,7 @@ export function App() {
             ) : (
               <div className="drop">
                 <p>Drop an SVG map here</p>
-                <p className="muted">or enter a Wikimedia Commons file name on the right</p>
+                <p className="muted">or enter a Wikimedia Commons file name</p>
               </div>
             )}
           </div>
@@ -367,7 +369,7 @@ export function App() {
                 onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), (e.target as HTMLInputElement).blur())}
                 spellCheck={false}
               />
-              <span className="muted">for maps in several languages; Commons shows en</span>
+              <span className="muted">for maps in several languages (default en)</span>
             </div>
             <div className="row small-row">
               <label className="button small">
@@ -415,23 +417,23 @@ export function App() {
                 <h2>{result.source === "commons" ? <a href={result.file!.page}>{result.name}</a> : result.name}</h2>
                 {result.source === "commons" ? (
                   <p className="muted">
-                    {result.file!.artist ? `Map by ${result.file!.artist}` : "Map from Wikimedia Commons"}
+                    {result.file!.artist ? `Author: ${result.file!.artist}.` : "Author: see the file page."}
                     {result.file!.license && (
                       <>
-                        {", "}
-                        {result.file!.licenseUrl ? <a href={result.file!.licenseUrl}>{result.file!.license}</a> : result.file!.license}
+                        {" Licence: "}
+                        {result.file!.licenseUrl ? <a href={result.file!.licenseUrl}>{result.file!.license}</a> : result.file!.license}.
                       </>
-                    )}
-                    . Rendered by Commons.
+                    )}{" "}
+                    The picture is Commons' own rendering.
                   </p>
                 ) : (
                   <p className="muted">
-                    Drawn by your browser, not by Commons, so the letters may not fill the boxes exactly. The file stays on your computer.
+                    Drawn by your browser, not by Commons, so the letters may not match the boxes. The file stays on your computer.
                   </p>
                 )}
                 <p>
-                  {named} names, read in {Math.max(1, Math.round(result.ms))} ms.{" "}
-                  {counts.core + counts.edge === 0 ? "No lines across any of them." : null}
+                  {named} {named === 1 ? "name" : "names"}, checked in {Math.max(1, Math.round(result.ms))} ms.{" "}
+                  {counts.core + counts.edge === 0 ? "No line shows through any of them." : null}
                 </p>
               </div>
 
@@ -482,11 +484,13 @@ export function App() {
             <h2>What this checks</h2>
             <p>
               Each name is measured with the fonts Commons renders SVG files with, and every stroked line in the file is
-              tested against its box. Lines thinner than 0.3 px at 1280 px wide are left out.
+              tested against each name's box. Lines thinner than 0.3 px on the 1280 px PNG are not counted, nor lines
+              painted over by a shape drawn later or lying on a shape of their own colour.
             </p>
             <p>
-              In 40 hits picked at random from 360 maps on Commons, 30 had a line through the letters, 6 did not and 4 were
-              unclear. Bold names measured too wide and lines in the colour of the background cause most false hits.
+              Of 40 names from the first list, picked at random from 360 Commons maps and judged without knowing the
+              result, 32 had a visible line through or touching the letters, 7 did not and 1 was unclear. In 4 of the 7
+              the line crossed the box but missed the letters.
             </p>
             <p>
               Nothing is uploaded. The page asks Commons for the file and its PNG; a file you open stays in your browser.

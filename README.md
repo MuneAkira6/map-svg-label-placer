@@ -13,6 +13,9 @@ It works in two ways:
 
 ![Names on lines (left) and after placement (right)](docs/before-after.png)
 
+The [checker page](https://muneakira6.github.io/map-svg-label-placer/) moves nothing: given an SVG map on Wikimedia
+Commons, it marks the names that Commons draws with a line through them.
+
 ## Why not an existing library
 
 - [vega-label](https://github.com/vega/vega/tree/main/packages/vega-label) avoids other marks, but only inside a Vega chart.
@@ -62,6 +65,22 @@ The config and label files use the format of the Python scripts, which is docume
 [`reference/python/map_place_labels.py`](reference/python/map_place_labels.py) and
 [`map_labels.py`](reference/python/map_labels.py).
 [`fixtures/jia-county/config.json`](fixtures/jia-county/config.json) is a small example.
+
+## Checking a map
+
+[The checker page](https://muneakira6.github.io/map-svg-label-placer/) runs `checkSvgLabels` in the browser.
+Give it the name of an SVG file on Wikimedia Commons, or a link to it. It outlines the names with a problem on the
+1280 px PNG that Commons makes of the map, and lists them; click a name to zoom to it. For a map in several
+languages, set the language to check that version. A link such as
+[`?file=Battle of hastings1.svg`](https://muneakira6.github.io/map-svg-label-placer/?file=Battle%20of%20hastings1.svg)
+opens with the check done.
+
+The page asks the Commons API for the file's URL, author and licence, then downloads the SVG and Commons' PNGs; it
+sends nothing else and needs no account. The check runs in a Web Worker, so a large map does not freeze the page.
+An SVG opened from your computer stays in the browser, but then the browser draws the map, not Commons, so the
+letters may not match the boxes.
+
+`npm run web` serves the page locally; `web/` holds its code.
 
 ## How it works
 
@@ -115,12 +134,15 @@ test maps had not:
 | Text along a `<textPath>`, which librsvg does not draw, read as labels | 4 | 46 |
 | `<flowRoot>` text, which librsvg does not draw, not reported | 9 | 28 |
 | Shapes and texts with zero opacity, which are not drawn, read as lines and labels | 21 | 3 |
+| `width`/`height` in mm or pt with no `viewBox`, taken as px, so names looked cut off | 4 | |
 
-Over the same maps the check finds a line through the letters of at least one name in 194 of the 253 maps that
-have text (3,764 names), not counting names with a halo or on a plate. Of 40 of those names picked at random,
-one per map, 30 do have a visible line through them, 6 do not, and 4 could not be told at that size. The six:
-a bold name measured wider than it is drawn, three lines that cannot be seen, a symbol's own stem, a line along
-the bottom of the box. Lines thinner than 0.3 px on a 1280 px wide map are not counted.
+Over the same maps the check finds a line through the letters of at least one name in 188 of the 253 maps that
+have names (3,522 names), not counting names with a halo or on a plate. I drew 40 of those names at random, one
+per map, rendered each with librsvg, and had them judged without saying what the check had found. 32 have a
+visible line through or touching their letters, 7 do not and 1 could not be told. In four of the seven a line
+crosses the box but misses the letters, which are narrower than the box; in the other three only the edge between
+two fills shows. Lines thinner than 0.3 px on a 1280 px wide map are not counted, nor lines covered by a shape
+drawn later; of 20 names that the second rule cleared, 18 indeed show no line and 2 have one touching a letter.
 
 ## Matching the Python version
 
@@ -148,10 +170,12 @@ differs:
 - Only type, class and id selectors in `<style>` are applied (all that the 39 sampled maps with a `<style>` used).
 - Lines of one name are joined by position alone, so two names stacked at line spacing and aligned (two towns
   close together, say) move together.
-- Arcs are treated as straight lines, and arc flags written without spaces (`a5 5 0 015 5`) are misread.
+- When moving names, arcs are treated as straight lines, as in the Python version; the check follows them. Arc
+  flags written without spaces (`a5 5 0 015 5`) are misread.
 - `<use>` and `<image>` are ignored.
-- The check does not know what is drawn on top of what: a line hidden under a filled area drawn after it, or
-  drawn in the colour of the area around it, still counts.
+- The check takes a line as hidden only where a later shape in a plain, opaque colour (no clip, mask or filter)
+  covers it, or where it lies on a shape of its own colour. Gaps in dashed lines, faint lines, names covered by a
+  later shape, and gradient or semi-transparent fills are not taken into account.
 - `sin`, `cos` and `atan2` come from the JavaScript engine and may differ in the last bit between engines.
 
 ## Licence
