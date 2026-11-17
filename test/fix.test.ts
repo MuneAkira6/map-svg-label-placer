@@ -117,6 +117,23 @@ describe("fixSvgLabels", () => {
     expect(res.moves.length + res.stuck.length).toBe(1);
   });
 
+  it("leaves half of a name written as two texts end to end where it is", () => {
+    // ラバト・アモン on a map is Rabbath and ·Ammon, two <text> elements on one line; a line crosses the second.
+    const [, [end]] = checkSvgLabels(map(`<text x="100" y="104">Rabbath</text>`)).labels[0]!.boxes[0]!.corners;
+    const svg = map(`<path d="M170 98 V106" stroke="#000"/>
+<text x="100" y="104">Rabbath</text><text x="${end}" y="104">Ammon</text>`);
+    const res = fixSvgLabels(svg);
+    expect(res.moves).toEqual([]);
+    expect(res.stuck.map((s) => [s.name, s.why])).toEqual([["Ammon", "split"]]);
+  });
+
+  it("moves a name that only touches another of a different size", () => {
+    const [, [end]] = checkSvgLabels(map(`<text x="100" y="104">Rabbath</text>`)).labels[0]!.boxes[0]!.corners;
+    const svg = map(`<path d="M170 98 V106" stroke="#000"/>
+<text x="100" y="104">Rabbath</text><text x="${end}" y="104" font-size="9">Ammon</text>`);
+    expect(fixSvgLabels(svg).moves.map((m) => m.name)).toEqual(["Ammon"]);
+  });
+
   it("measures distances at the size MediaWiki gives the map", () => {
     const small = map(`<path d="M0 100 H400" stroke="#000"/><text id="a" x="200" y="104">Scaled</text>`);
     const big = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="200" viewBox="0 0 4000 2000"><g font-family="DejaVu Sans" font-size="120"><path d="M0 1000 H4000" stroke="#000" stroke-width="10"/><text id="a" x="2000" y="1040">Scaled</text></g></svg>`;

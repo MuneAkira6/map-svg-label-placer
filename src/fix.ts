@@ -33,9 +33,10 @@ export type FixResult = {
   moves: FixMove[];
   /**
    * Names with a line through them that stay: no free place within reach ("full"), a single letter, which is
-   * mostly one of the spaced-out letters of an area's name ("letter"), or a name that cannot be measured ("size").
+   * mostly one of the spaced-out letters of an area's name ("letter"), a name that cannot be measured ("size"),
+   * or one half of a name written as two texts side by side ("split").
    */
-  stuck: { index: number; name: string; why: "full" | "letter" | "size" }[];
+  stuck: { index: number; name: string; why: "full" | "letter" | "size" | "split" }[];
   /** Root units per pixel at the size MediaWiki gives the map. */
   unitsPerPx: number;
 };
@@ -90,6 +91,27 @@ export function fixSvgLabels(svg: string, opts: FixOptions = {}): FixResult {
     if (!(h > 0)) {
       stuck.push({ index: lb.index, name: lb.name, why: "size" });
       continue;
+    }
+    // One half of a name written as two texts end to end on one line (ラバト and ・アモン, say) stays with the other:
+    // texts next to each other in the file, of one size, on one baseline, less than 0.15 letter heights apart.
+    if (own.length === 1) {
+      const b = own[0]!;
+      const at = groups[lb.index]!.drawn[0]!.index;
+      const c = Math.cos(b.ang);
+      const s = Math.sin(b.ang);
+      const half = check.labels.some((o) => {
+        const q = boxes[o.index]![0];
+        const t = groups[o.index]!.drawn[0];
+        if (mine.has(o.index) || boxes[o.index]!.length !== 1 || !q || !t || Math.abs(t.index - at) !== 1) return false;
+        if (Math.abs(Math.sin(q.ang - b.ang)) > 0.02 || Math.cos(q.ang - b.ang) < 0 || Math.min(q.hh, b.hh) / Math.max(q.hh, b.hh) < 0.95) return false;
+        const along = (q.cx - b.cx) * c + (q.cy - b.cy) * s;
+        const across = -(q.cx - b.cx) * s + (q.cy - b.cy) * c;
+        return Math.abs(across) <= 0.1 * h && Math.abs(Math.abs(along) - q.hw - b.hw) <= 0.15 * h;
+      });
+      if (half) {
+        stuck.push({ index: lb.index, name: lb.name, why: "split" });
+        continue;
+      }
     }
     const reach = (opts.reach ?? 2) * h;
     const rad = (b: OBox) => Math.hypot(b.hw, b.hh);
