@@ -64,9 +64,11 @@ const crossed = labels.filter((l) => l.line === "core" && !l.masked && !l.skippe
 
 `fixSvgLabels` moves only the names that `checkSvgLabels` finds with a line through their letters. Each goes to the
 nearest place within two letter heights where no line comes within a pixel of it. A name stays in the area it is
-in, next to its town's point if it has one, and off other names and points; only its `x` and `y` change. Single
-letters stay, as they are mostly the spaced-out letters of an area's name. `stuck` lists the names that stay and
-why.
+in and off other names and points; only its `x` and `y` change. A point is any small closed shape: a circle, or a
+dot, square, triangle or star drawn as a path, rect, polygon or `<use>`. If one is within a letter height of the
+name, the name stays nearer to it than to any other point, and its gap to that point grows by half a letter height
+at most. Single letters stay, as they are mostly the spaced-out letters of an area's name, and so does either half
+of a name written as two `<text>` elements end to end. `stuck` lists the names that stay and why.
 
 ```ts
 import { fixSvgLabels } from "map-svg-label-placer";
@@ -162,23 +164,34 @@ crosses the box but misses the letters, which are narrower than the box; in the 
 two fills shows. Lines thinner than 0.3 px on a 1280 px wide map are not counted, nor lines covered by a shape
 drawn later; of 20 names that the second rule cleared, 18 indeed show no line and 2 have one touching a letter.
 
-Moving: over those 253 maps, `fixSvgLabels` moved 980 of the 14,157 names (7%), by a median of 14 px at the map's
-nominal size, as on its Commons file page (90% under 32 px), and the check then finds 2,543 names with a line
-through the letters instead of 3,522 (one moved name still has one). No map has more names covering each other or
-running off the edge than before. The other 2,542 stay: 2,429 had no free place within reach, 107 are single
-letters, and 6 could not be measured.
+Moving: over those 253 maps, `fixSvgLabels` moved 664 of the 14,157 names (5%), by a median of 13 px at the map's
+nominal size, as on its Commons file page (90% under 32 px), and the check then finds 2,859 names with a line
+through the letters instead of 3,522 (one moved name still has one). No map has more names covering each other or running off the edge than
+before. The other 2,858 stay: 2,742 had no free place within reach, 107 are single letters, 6 could not be
+measured and 3 are half of a name written as two `<text>` elements. [`scripts/fix_stats.mjs`](scripts/fix_stats.mjs) gives
+these numbers.
 
-A first version also took places where a line still crossed the edge of the name's box, and went up to three letter
-heights. In a blind check of 40 of its moves, 11 of the 17 that ended on such a line still had it through or
-touching the letters, and names moved more than 20 px were mostly further from what they named, so both were
-dropped: a place must now be clear of lines, and the reach is two letter heights.
+Each version of the rules was checked the same way: moved names drawn at random, judged by someone who was not
+told which picture was which. One question was asked with old and new places shuffled (is there a line on the
+letters?), the other side by side (does the name still label the same thing?).
 
-With these rules, 40 more moves were drawn at random and judged the same way: each name was shown at its old and
-new place, in random order. After the move, 34 have no line touching the letters, 3 have one touching, 1 (a
-Japanese name, drawn in the browser's fonts) has one through it, and 2 could not be judged; at the old place 24 had
-a line through them. As for what each name labels, 24 read as before, 11 less clearly and 3 wrongly (two moved
-across a border, one was half of a name split over two `<text>` elements), and 2 could not be told. Of the 17 moved
-15 px or less, 16 read as before. Look over the moved names before using the file.
+- The first version also took places where a line still crossed the edge of the name's box, and went up to three
+  letter heights. Of the 17 of its 40 moves that ended on such a line, 11 still had it through or touching the
+  letters, so a place must now be clear of lines, and the reach is two letter heights.
+- The second version moved 980 names. Of 40, 3 read wrongly after the move: two had left their town's point, which
+  was drawn as a path rather than a circle, and one was half of a name written as two `<text>` elements. Only about
+  one in five of the small symbols next to names on these maps is a `<circle>`, so all small closed shapes now count
+  as points.
+- Distance was not the problem. I split 36 moves of the third version into three groups of 12 by distance (up to
+  15 px, 15 to 25 px, over 25 px); 7, 7 and 8 read as before. For names next to a point, what mattered was how much
+  their gap to it grew. Of the 19 next to a point, 10 read as before, and in 9 of them the gap grew by less than
+  half a letter height; in 7 of the 9 that read less clearly it grew by more. Half a letter height is now the limit.
+
+With the present rules I drew 40 moves at random (seed 37). After the move, 39 have no line on the letters and 1
+has a meridian through it that is too thin for the check to count; at the old place 21 had a line through the
+letters, 11 one touching them and 8 none. As for what each name labels, 28 read as before and 12 less clearly, none
+wrongly. Four of the twelve are street names on an old town plan, written on the street and moved off it. Look
+over the moved names before using the file.
 
 ## Matching the Python version
 
@@ -208,7 +221,8 @@ differs:
   close together, say) move together.
 - When moving names, arcs are treated as straight lines, as in the Python version; the check follows them. Arc
   flags written without spaces (`a5 5 0 015 5`) are misread.
-- `<use>` and `<image>` are ignored.
+- `<use>` and `<image>` are not read as obstacles. `fixSvgLabels` treats the bounding box of what a `<use>` refers
+  to as a point, ignoring the `width`, `height` and `viewBox` of a `<symbol>`.
 - The check takes a line as hidden only where a later shape in a plain, opaque colour (no clip, mask or filter)
   covers it, or where it lies on a shape of its own colour. Gaps in dashed lines, faint lines, names covered by a
   later shape, and gradient or semi-transparent fills are not taken into account.
