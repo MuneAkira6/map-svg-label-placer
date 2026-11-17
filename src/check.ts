@@ -1,7 +1,7 @@
 // A read-only check of the names on an SVG map, as Commons draws them: which have a line through them, which
 // cover each other, which run off the edge, and which text Commons does not show at all.
 
-import { apply, cellKey, matAngle, matScale, numbersIn, pushCell, segHitsBox, type Pt } from "./geometry.js";
+import { apply, cellKey, matAngle, matMul, matScale, numbersIn, pushCell, segHitsBox, type Pt } from "./geometry.js";
 import { pathSubpaths } from "./path.js";
 import { floorDivInt } from "./py.js";
 import { alpha, num as svgNum, paints, parseSvg, walkSvg, type Seg, type SvgElement } from "./svg.js";
@@ -351,6 +351,97 @@ class Paint {
   };
 }
 
+/**
+ * A small closed shape on the map that may be a town's point: centre, half its longer side (with the stroke),
+ * and how many times longer it is than wide.
+ */
+export type PointSymbol = { x: number; y: number; r: number; long: number };
+
+type Bounds = [number, number, number, number];
+
+function bounds(pts: readonly Pt[], into: Bounds = [Infinity, Infinity, -Infinity, -Infinity]): Bounds {
+  for (const [x, y] of pts) {
+    if (x < into[0]) into[0] = x;
+    if (y < into[1]) into[1] = y;
+    if (x > into[2]) into[2] = x;
+    if (y > into[3]) into[3] = y;
+  }
+  return into;
+}
+
+function pointOf(pts: readonly Pt[], pad: number): PointSymbol | null {
+  const [x0, y0, x1, y1] = bounds(pts);
+  const w = x1 - x0;
+  const h = y1 - y0;
+  if (!(Math.max(w, h) > 0)) return null;
+  return { x: (x0 + x1) / 2, y: (y0 + y1) / 2, r: Math.max(w, h) / 2 + pad, long: Math.max(w, h) / Math.max(Math.min(w, h), 1e-9) };
+}
+
+/**
+ * Collects the closed shapes that could be point symbols: circles and ellipses, rects, polygons and short paths
+ * (Inkscape draws circles, squares and stars as paths). Also notes the extent of every element with an id, and of
+ * what is inside it, so that a <use> can be measured by what it refers to.
+ */
+class PointReader {
+  readonly points: PointSymbol[] = [];
+  private readonly extent = new Map<string, Bounds>();
+  private readonly uses: SvgElement[] = [];
+
+  add(el: SvgElement): void {
+    const a = el.attrs;
+    const n = (k: string) => svgNum(a.get(k), 0);
+    let pts: Pt[];
+    let closed = true;
+    if (el.local === "circle" || el.local === "ellipse") {
+      const [cx, cy] = [n("cx"), n("cy")];
+      const rx = el.local === "circle" ? n("r") : n("rx");
+      const ry = el.local === "circle" ? n("r") : n("ry");
+      pts = [[cx - rx, cy], [cx + rx, cy], [cx, cy - ry], [cx, cy + ry]];
+    } else if (el.local === "rect") {
+      if (`${a.get("width")}${a.get("height")}`.includes("%")) return;
+      const [x, y, w, h] = [n("x"), n("y"), n("width"), n("height")];
+      pts = [[x, y], [x + w, y], [x + w, y + h], [x, y + h]];
+    } else if (el.local === "polygon") {
+      const v = numbersIn(a.get("points") ?? "");
+      pts = [];
+      for (let i = 0; i + 1 < v.length; i += 2) pts.push([v[i]!, v[i + 1]!]);
+    } else if (el.local === "path") {
+      const d = a.get("d") ?? "";
+      if (d.length > 4000) return; // a coastline or a border, not a symbol
+      const rings = pathSubpaths(d, () => {}, { arcs: true });
+      if (rings.length === 0 || rings.length > 3) return;
+      pts = rings.flatMap((r) => r.pts);
+      closed = rings.every((r) => r.closed) || paints(el.inh, "fill");
+    } else {
+      if (el.local === "use" && !el.hidden && !el.nonrender) this.uses.push(el);
+      return;
+    }
+    if (pts.length === 0) return;
+    const root = pts.map(([x, y]) => apply(el.m, x, y));
+    const id = a.get("id");
+    for (const k of id === undefined ? el.ancestors : [...el.ancestors, id]) this.extent.set(k, bounds(root, this.extent.get(k)));
+    if (el.hidden || el.nonrender || !closed) return;
+    const stroked = paints(el.inh, "stroke");
+    if (!stroked && !paints(el.inh, "fill")) return;
+    const p = pointOf(root, stroked ? (svgNum(el.inh.get("stroke-width"), 1) * matScale(el.m)) / 2 : 0);
+    if (p) this.points.push(p);
+  }
+
+  /** The points, with each <use> placed where it draws what it refers to (taken as drawn at the origin). */
+  finish(): PointSymbol[] {
+    for (const el of this.uses) {
+      const href = (el.attrs.get("href") ?? el.attrs.get("xlink:href") ?? "").trim();
+      const e = href.startsWith("#") ? this.extent.get(href.slice(1)) : undefined;
+      if (!e) continue;
+      const m = matMul(el.m, [1, 0, 0, 1, svgNum(el.attrs.get("x"), 0), svgNum(el.attrs.get("y"), 0)]);
+      const p = pointOf(([[e[0], e[1]], [e[2], e[1]], [e[2], e[3]], [e[0], e[3]]] as const).map(([x, y]) => apply(m, x, y)), 0);
+      if (p) this.points.push(p);
+    }
+    this.uses.length = 0;
+    return this.points;
+  }
+}
+
 const STROKE_IN_TSPAN = /<tspan\b[^>]*(?:\sstroke\s*=\s*["'](?!none)[^"']+["']|stroke\s*:\s*(?!none)[#a-z])/i;
 
 export function checkSvgLabels(svg: string, opts: CheckOptions = {}): SvgCheck {
@@ -372,7 +463,9 @@ export function checkScene(svg: string, opts: CheckOptions = {}) {
   const flowRoots: { start: number; end: number; text: string; corners: Quad | null }[] = [];
   const fills: Fill[] = [];
   const strokeOf = new Map<number, string | null>();
+  const pointReader = new PointReader();
   for (const el of walkSvg(svg)) {
+    pointReader.add(el);
     if (!el.hidden && !el.nonrender && el.local !== "text") {
       if (paints(el.inh, "stroke")) strokeOf.set(el.start, colorKey(el.inh.get("stroke")));
       const color = paints(el.inh, "fill") && alpha(el.inh.get("fill-opacity")) >= 1 && el.opacity >= 1 && !el.masked ? colorKey(el.inh.get("fill")) : null;
@@ -517,5 +610,6 @@ export function checkScene(svg: string, opts: CheckOptions = {}) {
     }
     unshown.push({ kind: "textPath", text: t.content, corners });
   }
-  return { check: { frame: L.frame, labels, unshown, warnings } as SvgCheck, groups: L.groups, lines, shows, paint, boxesOf, obst, copies };
+  const points = pointReader.finish();
+  return { check: { frame: L.frame, labels, unshown, warnings } as SvgCheck, groups: L.groups, lines, shows, paint, boxesOf, obst, copies, points };
 }

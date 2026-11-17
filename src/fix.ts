@@ -69,7 +69,7 @@ function gapTo(b: OBox, x: number, y: number): number {
 }
 
 export function fixSvgLabels(svg: string, opts: FixOptions = {}): FixResult {
-  const { check, groups, lines, shows, paint, boxesOf, obst, copies } = checkScene(svg, { lang: opts.lang });
+  const { check, groups, lines, shows, paint, boxesOf, points, copies } = checkScene(svg, { lang: opts.lang });
   const [X0, Y0, W, H] = check.frame;
   const view = svgViewport(svg);
   const k = Math.max(W / view.width, H / view.height);
@@ -104,12 +104,14 @@ export function fixSvgLabels(svg: string, opts: FixOptions = {}): FixResult {
     ];
     // The area the name is in (the last shape drawn under its middle), which it must not leave.
     const area = paint.topAt(...centre(0, 0));
-    // A point symbol within a letter height of the name is taken to be the one it names: it must stay the
-    // nearest symbol to the name, and no further from it than a letter height (or than it was).
-    const symbols = obst.circles.filter(([, , r]) => r <= h).map(([x, y, r]) => ({ x, y, r }));
+    // Point symbols: small closed shapes, at most two letter heights across and not long and thin. One within a
+    // letter height of the name is taken to be the one it names: it must stay the nearest symbol to the name, and
+    // the gap between them may grow by half a letter height at most (and never past a letter height, or past
+    // the gap there was).
+    const symbols = points.filter((p) => p.r <= h && p.long <= 2.5);
     const dist = (bs: OBox[], s: { x: number; y: number; r: number }) => Math.min(...bs.map((b) => gapTo(b, s.x, s.y))) - s.r;
     const near = symbols.map((s) => ({ s, d: dist(own, s) })).filter((e) => e.d <= h).sort((p, q) => p.d - q.d)[0];
-    const keep = near ? Math.max(near.d, h) : 0;
+    const keep = near ? Math.min(near.d + h / 2, Math.max(near.d, h)) : 0;
 
     // Free: no line within a pixel of the box, cheap tests first.
     const free = (dx: number, dy: number): boolean => {

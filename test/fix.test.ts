@@ -59,8 +59,19 @@ describe("fixSvgLabels", () => {
     for (const m of res.moves) expect(150 + m.dx).toBeLessThan(200);
   });
 
-  it("keeps a town's name next to its own point, and off it", () => {
-    const svg = map(`<circle cx="100" cy="100" r="2"/><circle cx="140" cy="84" r="2"/>
+  // A town's point as maps draw it: a circle, or a path (Inkscape's circles), a <use> of a symbol, a square, a triangle.
+  const POINTS: [string, (x: number, y: number) => string][] = [
+    ["a circle", (x, y) => `<circle cx="${x}" cy="${y}" r="2"/>`],
+    ["a path with arcs", (x, y) => `<path d="M${x - 2} ${y} a2 2 0 1 0 4 0 a2 2 0 1 0 -4 0z"/>`],
+    ["a path with curves", (x, y) => `<path d="M${x - 2} ${y} c0 -2.7 4 -2.7 4 0 c0 2.7 -4 2.7 -4 0z"/>`],
+    ["a <use> of a symbol", (x, y) => `<use href="#dot" x="${x}" y="${y}"/>`],
+    ["a square", (x, y) => `<rect x="${x - 2}" y="${y - 2}" width="4" height="4"/>`],
+    ["a triangle", (x, y) => `<polygon points="${x - 2},${y + 2} ${x + 2},${y + 2} ${x},${y - 2}"/>`],
+  ];
+  const DEFS = `<defs><circle id="dot" r="2"/></defs>`;
+
+  it.each(POINTS)("keeps a town's name next to its own point, and off it (point drawn as %s)", (_, point) => {
+    const svg = map(`${DEFS}${point(100, 100)}${point(140, 84)}
 <path d="M110 100 H400" stroke="#000"/>
 <text id="t" x="105" y="104">Dotton</text>`);
     const res = fixSvgLabels(svg);
@@ -71,16 +82,39 @@ describe("fixSvgLabels", () => {
     expect(Math.hypot(x - 100, y - 104)).toBeLessThan(30);
   });
 
-  it("does not put a name over its own point", () => {
+  it.each(POINTS)("does not put a name over its own point (point drawn as %s)", (_, point) => {
     // Lines above, through and below the name leave only the way left, across the town's point.
     const lines = [88, 100, 112].map((y) => `<path d="M104 ${y} H400" stroke="#000"/>`).join("");
-    const svg = map(`<circle cx="100" cy="100" r="2"/>${lines}<text id="t" x="105" y="104">Ab</text>`);
+    const svg = map(`${DEFS}${point(100, 100)}${lines}<text id="t" x="105" y="104">Ab</text>`);
     const res = fixSvgLabels(svg);
     const [[l, t], , [r, b]] = res.before.labels[0]!.boxes[0]!.corners;
     expect(res.moves).toHaveLength(1);
     const { dx, dy } = res.moves[0]!;
     const gap = Math.hypot(Math.max(l! + dx - 100, 0, 100 - r! - dx), Math.max(t! + dy - 100, 0, 100 - b! - dy));
     expect(gap).toBeGreaterThan(2);
+  });
+
+  it("takes a coastline or a road next to a name for a line, not for its point", () => {
+    // A small island 60 px long and a short thick road segment beside the name: neither holds it.
+    const svg = map(`<path d="M60 112 h60 v6 h-60z" fill="#ccc" stroke="#000" stroke-width="0.2"/>
+<rect x="150" y="96" width="30" height="4"/>
+<path d="M0 100 H400" stroke="#000"/>
+<text id="t" x="105" y="104">Isle</text>`);
+    expect(fixSvgLabels(svg).moves).toHaveLength(1);
+  });
+
+  it("moves a name at most half a letter height further from its point", () => {
+    // The town's point is below and left of the name; lines through and below the name leave free places
+    // only above it, where the gap to the point would grow by more than half a letter height.
+    const lines = [100, 110, 116, 122].map((y) => `<path d="M104 ${y} H400" stroke="#000"/>`).join("");
+    const svg = map(`<circle cx="100" cy="110" r="2"/>${lines}<text id="t" x="105" y="104">Dotton</text>`);
+    const res = fixSvgLabels(svg);
+    const box = res.before.labels[0]!.boxes[0]!.corners;
+    const h = box[3][1] - box[0][1];
+    const gapAt = (dx: number, dy: number) =>
+      Math.hypot(Math.max(box[0][0] + dx - 100, 0, 100 - box[1][0] - dx), Math.max(box[0][1] + dy - 110, 0, 110 - box[3][1] - dy)) - 2;
+    for (const m of res.moves) expect(gapAt(m.dx, m.dy) - gapAt(0, 0)).toBeLessThanOrEqual(h / 2 + 1e-9);
+    expect(res.moves.length + res.stuck.length).toBe(1);
   });
 
   it("measures distances at the size MediaWiki gives the map", () => {
