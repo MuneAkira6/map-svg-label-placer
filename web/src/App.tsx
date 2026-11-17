@@ -166,7 +166,7 @@ export function App() {
         const reply = await runCheck(text, language);
         if (id !== runId.current) return;
         if (!reply.ok) throw new Error(`Could not read the SVG: ${reply.error}`);
-        const url = await drawable(text);
+        const url = await drawable(text, language);
         if (id !== runId.current) return URL.revokeObjectURL(url);
         const { width, height } = reply.viewport;
         show({ source: "file", name: file.name, picture: { url, width, height }, check: reply.check, viewport: reply.viewport, ms: reply.ms });
@@ -197,7 +197,7 @@ export function App() {
         const reply = await runCheck(text, language);
         if (id !== runId.current) return;
         if (!reply.ok) throw new Error(`Could not read the SVG: ${reply.error}`);
-        const url = await drawable(text);
+        const url = await drawable(text, language);
         if (id !== runId.current) return URL.revokeObjectURL(url);
         const { width, height } = reply.viewport;
         show({ source: "example", example: ex, name: ex.title, picture: { url, width, height }, check: reply.check, viewport: reply.viewport, ms: reply.ms });
@@ -229,8 +229,8 @@ export function App() {
       if (!reply.ok || !reply.moved) throw new Error(`Could not move the names: ${reply.ok ? "no result" : reply.error}`);
       const { width, height } = result.viewport;
       // Commons' PNG cannot show the moved names, so both versions are drawn by the browser.
-      const before = result.source === "commons" ? { url: await drawable(text), width, height } : result.picture;
-      const after = { url: await drawable(reply.moved.svg), width, height };
+      const before = result.source === "commons" ? { url: await drawable(text, lang), width, height } : result.picture;
+      const after = { url: await drawable(reply.moved.svg, lang), width, height };
       const dl = URL.createObjectURL(new Blob([reply.moved.svg], { type: "image/svg+xml" }));
       if (id !== runId.current) return;
       blobs.current.push(after.url, dl, ...(before === result.picture ? [] : [before.url]));
