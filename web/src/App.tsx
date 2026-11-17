@@ -545,11 +545,12 @@ export function App() {
                       Names with a line through them: {crossed(result.check)} → {crossed(moved.check)}.{" "}
                       {[
                         `${moved.moves.length} moved`,
-                        ...(["full", "letter", "size"] as const).flatMap((why) => {
+                        ...(["full", "letter", "split", "size"] as const).flatMap((why) => {
                           const n = moved.stuck.filter((x) => x.why === why).length;
                           if (!n) return [];
                           if (why === "full") return [`${n} had no free place nearby`];
                           if (why === "letter") return [`${n} single ${n === 1 ? "letter" : "letters"} left alone`];
+                          if (why === "split") return [`${n} ${n === 1 ? "half of a split name" : "halves of split names"} left alone`];
                           return [`${n} could not be measured`];
                         }),
                       ].join(", ")}
@@ -632,17 +633,19 @@ export function App() {
             <h2>How names are moved</h2>
             <p>
               Only the names in "Line through the letters" move. Each goes to the nearest place within two letter heights
-              where no line comes within a pixel of it. A name stays in the area it is in, next to its town's point if it
-              has one, and keeps off other names and points. Only its x and y change. Single letters stay: they are mostly the
-              spaced-out letters of an area's name.
+              where no line comes within a pixel of it. A name stays in the area it is in and keeps off other names and
+              points. A name with a point next to it (a dot, square, triangle or star) stays nearer to that point than to
+              any other, and its gap to that point grows by half a letter height at most. Only its x and y change. Single letters
+              stay, as they are mostly the spaced-out letters of an area's name, and so does either half of a name written as
+              two texts end to end.
             </p>
             <p>
-              Over the same maps, 980 names moved (7% of all names), by a median of 14 px at the map's nominal size, and the names with a line
-              through them went from 3,522 to 2,543. No map got more names on top of each other or cut off.
-              In a blind check of 40 moved names picked at random, with old and new places shuffled, 34 had no line
-              touching the letters after the move, 3 had one touching and 1 had one through them; 2 could not be judged.
-              Of the same 40, 24 still read as naming the same thing, 11 less clearly and 3 wrongly. Look over the moved
-              names before you use the file.
+              Over the same maps, 664 names moved (5% of all names), by a median of 13 px at the map's nominal size, and
+              the names with a line through them went from 3,522 to 2,859. No map got more names on top of each other or
+              cut off. In a blind check of 40 moved names picked at random, with old and new places shuffled, 39 had no
+              line on the letters after the move and 1 had a line too thin for the check to count. Of the same 40, 28
+              still read as naming the same thing and 12 less clearly; none read wrongly. Look over the moved names before
+              you use the file.
             </p>
             <p>
               Nothing is uploaded. The page asks Commons for the file and its PNG; a file you open stays in your browser.
