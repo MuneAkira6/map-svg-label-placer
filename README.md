@@ -92,9 +92,10 @@ opens with the check done. For a map in several languages, set the language to c
 
 A Commons file is first shown as the 1280 px PNG that Commons makes of it. Once names are moved, Commons has no
 picture of the new file, so both versions are drawn by the browser, in the fonts Commons uses: the page swaps each
-`font-family` for the font Commons picks and puts that font into the file it shows. The fonts come from the same
-Debian packages as Commons' ([`scripts/web_fonts.py`](scripts/web_fonts.py)). Chinese, Japanese and Korean text
-is drawn in the browser's own fonts, so it may not match its box.
+`font-family` for the font Commons picks and puts that font into the file it shows. It also shows the language
+version Commons draws, where the browser would pick one in its own language or hide text marked for another. The
+fonts come from the same Debian packages as Commons' ([`scripts/web_fonts.py`](scripts/web_fonts.py)). Chinese,
+Japanese and Korean text is drawn in the browser's own fonts, so it may not match its box.
 
 The page asks the Commons API for the file's URL, author and licence, then downloads the SVG and Commons' PNGs; it
 sends nothing else and needs no account. Checking and moving run in a Web Worker, so a large map does not freeze
@@ -163,6 +164,13 @@ visible line through or touching their letters, 7 do not and 1 could not be told
 crosses the box but misses the letters, which are narrower than the box; in the other three only the edge between
 two fills shows. Lines thinner than 0.3 px on a 1280 px wide map are not counted, nor lines covered by a shape
 drawn later; of 20 names that the second rule cleared, 18 indeed show no line and 2 have one touching a letter.
+
+Three kinds of hit looked like false alarms, so I drew 20 of each at random, one per map where I could, and had
+them judged the same way: a line that crosses only the outer ends of the box (18 of the 19 that could be judged
+do touch or cross the letters), a dashed line (17 of 19), and a line in nearly the colour of what lies under it
+(15 of 20). The five of the last kind with no line on the letters differ from their background by anything from
+0 to 24 ΔE, as do the real ones, so no colour threshold would remove more false hits than real ones. The check
+was left as it is.
 
 Moving: over those 253 maps, `fixSvgLabels` moved 664 of the 14,157 names (5%), by a median of 13 px at the map's
 nominal size, as on its Commons file page (90% under 32 px), and the check then finds 2,859 names with a line
