@@ -18,5 +18,5 @@ export { measureText, resolveFont } from "./fonts.js";
 export type { TextMetrics, TextStyle } from "./fonts.js";
 export { fixSvgLabels } from "./fix.js";
 export type { FixMove, FixOptions, FixResult } from "./fix.js";
-export { commonsFonts, withFontFaces } from "./display.js";
+export { commonsFonts, pinLanguage, withFontFaces } from "./display.js";
 export type { CommonsFace } from "./display.js";

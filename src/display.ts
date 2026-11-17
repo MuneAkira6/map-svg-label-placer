@@ -3,6 +3,7 @@
 
 import { resolveFont } from "./fonts.js";
 import { walkSvg } from "./svg.js";
+import { langMatches } from "./textgroups.js";
 
 export type CommonsFace = {
   family: "Noto Sans" | "Noto Serif" | "Liberation Sans" | "Liberation Serif" | "DejaVu Sans" | "DejaVu Serif";
@@ -81,4 +82,38 @@ export function withFontFaces(svg: string, faces: readonly CommonsFace[], src: (
     return `${svg.slice(0, el.tagEnd)}<${prefix}style>${css}</${prefix}style>${svg.slice(el.tagEnd)}`;
   }
   return svg;
+}
+
+const SYSTEM_LANGUAGE = /\ssystemLanguage\s*=\s*(?:"[^"]*"|'[^']*')/;
+
+/**
+ * A copy that a browser draws in the language Commons draws it in for `lang`, whatever the browser's own language.
+ * In each <switch>, the version drawn is the first child whose systemLanguage matches, else the first child; that
+ * child loses its systemLanguage and the children before it get one that matches no language. A systemLanguage
+ * outside a <switch> is dropped: Commons draws such elements (a browser would hide them in another language).
+ */
+export function pinLanguage(svg: string, lang: string): string {
+  const switches = new Map<number, { start: number; tagEnd: number; lang: string | undefined }[]>();
+  const edits: { start: number; tagEnd: number; tag: string }[] = [];
+  for (const el of walkSvg(svg)) {
+    if (el.alt === null || el.alt.at !== el.start || el.switchAt === null) {
+      if (el.attrs.has("systemLanguage")) {
+        edits.push({ start: el.start, tagEnd: el.tagEnd, tag: svg.slice(el.start, el.tagEnd).replace(SYSTEM_LANGUAGE, "") });
+      }
+      continue;
+    }
+    switches.set(el.switchAt, [...(switches.get(el.switchAt) ?? []), { start: el.start, tagEnd: el.tagEnd, lang: el.alt.lang }]);
+  }
+  for (const kids of switches.values()) {
+    const drawn = Math.max(0, kids.findIndex((k) => langMatches(k.lang, lang)));
+    kids.slice(0, drawn + 1).forEach((k, i) => {
+      const tag = svg.slice(k.start, k.tagEnd);
+      const out = i === drawn ? tag.replace(SYSTEM_LANGUAGE, "") : tag.replace(SYSTEM_LANGUAGE, ' systemLanguage="x-none"');
+      if (out !== tag) edits.push({ start: k.start, tagEnd: k.tagEnd, tag: out });
+    });
+  }
+  edits.sort((p, q) => q.start - p.start);
+  let out = svg;
+  for (const e of edits) out = out.slice(0, e.start) + e.tag + out.slice(e.tagEnd);
+  return out;
 }

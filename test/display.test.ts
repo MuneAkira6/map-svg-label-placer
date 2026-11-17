@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { commonsFonts, withFontFaces } from "../src/display.js";
+import { commonsFonts, pinLanguage, withFontFaces } from "../src/display.js";
 
 describe("commonsFonts", () => {
   it("replaces each font-family with the font Commons draws it in", () => {
@@ -37,5 +37,29 @@ describe("withFontFaces", () => {
     expect(out).toBe(
       `<?xml version="1.0"?><svg:svg xmlns:svg="http://www.w3.org/2000/svg"><svg:style>@font-face{font-family:"Noto Sans";font-weight:400;font-style:normal;src:url(fonts/NotoSans-Regular.woff2)}</svg:style><svg:g/></svg:svg>`,
     );
+  });
+});
+
+describe("pinLanguage", () => {
+  const sw = (...kids: string[]) => `<svg xmlns="http://www.w3.org/2000/svg"><switch>${kids.join("")}</switch></svg>`;
+
+  it("shows the only version there is, as Commons does, though it is not in the browser's language", () => {
+    const out = pinLanguage(sw(`<text systemLanguage="fr">Nisibe</text>`, `<text systemLanguage="de">Nisibis</text>`), "en");
+    expect(out).toBe(sw(`<text>Nisibe</text>`, `<text systemLanguage="de">Nisibis</text>`));
+  });
+
+  it("shows the version for the language asked for, whatever the browser's language", () => {
+    const out = pinLanguage(sw(`<g systemLanguage="ja"><text>ニシビス</text></g>`, `<g systemLanguage="de,fr"><text>Nisibis</text></g>`, `<g><text>Nisibis</text></g>`), "fr");
+    expect(out).toBe(sw(`<g systemLanguage="x-none"><text>ニシビス</text></g>`, `<g><text>Nisibis</text></g>`, `<g><text>Nisibis</text></g>`));
+  });
+
+  it("draws a text with a systemLanguage outside any <switch>, as Commons does", () => {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg"><g><text systemLanguage="fr" x="1">Nisibe</text></g></svg>`;
+    expect(pinLanguage(svg, "en")).toBe(`<svg xmlns="http://www.w3.org/2000/svg"><g><text x="1">Nisibe</text></g></svg>`);
+  });
+
+  it("leaves a map with no systemLanguage as it is", () => {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg"><switch><text>a</text></switch></svg>`;
+    expect(pinLanguage(svg, "en")).toBe(svg);
   });
 });
